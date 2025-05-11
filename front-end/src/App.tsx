@@ -7,11 +7,11 @@ import '@/App.css'
 
 export default function App() {
   return (
-    <div style={styles.wrapper}>
-      <nav style={styles.nav}>
+    <div>
+      {/* <nav style={styles.nav}>
         <Link to="/" style={styles.link}>Home</Link>
         <Link to="/about" style={styles.link}>About</Link>
-      </nav>
+      </nav> */}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -19,20 +19,4 @@ export default function App() {
       </Routes>
     </div>
   )
-}
-
-const styles = {
-  wrapper: { padding: '1rem' },
-  nav: {
-    display: 'flex',
-    gap: '1rem',
-    marginBottom: '1rem',
-    borderBottom: '1px solid #ccc',
-    paddingBottom: '0.5rem',
-  },
-  link: {
-    textDecoration: 'none',
-    color: '#007acc',
-    fontWeight: 'bold' as const,
-  },
 }
