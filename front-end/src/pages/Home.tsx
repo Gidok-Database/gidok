@@ -6,11 +6,11 @@ export default function Home() {
     <div className="layout-container">
       <header className="top-nav">
         <div className="nav-left">
-          <div className="avatar" />
+          <span className="material-symbols-outlined">account_circle</span>
         </div>
         <div className="nav-right">
-          <div className="icon" />
-          <div className="profile" />
+          <span className="material-symbols-outlined">notifications</span>
+          <span className="material-symbols-outlined">account_circle</span>
         </div>
       </header>
       <div className="body-container">

@@ -5,16 +5,31 @@
   display: flex;
   flex-direction: column;
 
-  .search-box {
-    padding: 0.5rem;
+  .search-wrapper {
+    position: relative;
     margin-bottom: 1rem;
-    font-size: 0.875rem;
-    border: 1px solid #ccc;
-    border-radius: 0.25rem;
-    outline: none;
 
-    &:focus {
-      border-color: #888;
+    .search-box {
+      width: 80%;
+      padding: 0.5rem 0.5rem 0.5rem 2rem;
+      font-size: 0.875rem;
+      border: 1px solid #ccc;
+      border-radius: 0.25rem;
+      outline: none;
+
+      &:focus {
+        border-color: #888;
+      }
+    }
+
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      left: 0.5rem;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: #888;
+      pointer-events: none;
     }
   }
 
