@@ -1,8 +1,6 @@
 from fastapi import FastAPI
+from routes import login
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
-
-@app.get("/")
-async def hello():
-    return {"msg": "hi from /hello"}
+app.include_router(login.router)
