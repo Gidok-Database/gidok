@@ -58,16 +58,16 @@
     .file-box {
       background-color: #fff;
       border: 1px solid #ccc;
-  
-      p {
+
+      .file-title {
         margin: 0;
         padding: 0.5rem;
-        background-color: #f5f5f5;
         border-bottom: 1px solid #ccc;
       }
-  
+
       .file-content {
-        height: 20rem;
+        margin: 2rem;
+        // height: 20rem;
         background-color: #fff;
       }
     }
