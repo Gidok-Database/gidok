@@ -1,8 +1,9 @@
-import { Routes, Route, Link } from 'react-router-dom'
+import { Routes, Route, Link } from 'react-router-dom';
 
-import Home from '@/pages/Home'
-import About from '@/pages/About'
-import '@/App.css'
+import Home from '@/pages/Home/Home';
+import Login from '@/pages/Login/Login';
+import Register from '@/pages/Register/Register';
+import '@/App.css';
 
 
 export default function App() {
@@ -15,7 +16,8 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </div>
   )

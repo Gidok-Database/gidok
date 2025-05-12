@@ -1,4 +1,5 @@
-import "@/components/Sidebar.css";
+import "@/components/Sidebar/Sidebar.css";
+
 
 export default function Sidebar() {
   return (
