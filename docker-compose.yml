@@ -13,6 +13,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      internal:
   backend:
     build: ./backend
     container_name: fastapi-backend
@@ -20,5 +22,9 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+    networks:
+      internal:
 volumes:
   postgres_data:
+networks:
+  internal:

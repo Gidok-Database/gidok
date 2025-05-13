@@ -2,28 +2,30 @@
 -- These should be provided by the container or script via psql -v or envsubst preprocessing
 -- Example use with psql: psql -v dev_pass='mydevpass' -v app_pass='myapppass' -f init.sql
 -- ${APP}
-CREATE USER app WITH PASSWORD 'yourAppPassword';
 
 -- Create roles for app and dev access
-CREATE ROLE app_user;
-GRANT CONNECT ON DATABASE gidok TO app_user;
-GRANT USAGE ON SCHEMA public TO app_user;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_user;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO app_user;
+CREATE USER app WITH PASSWORD 'yourAppPassword';
+GRANT CONNECT ON DATABASE gidok TO app;
+GRANT USAGE ON SCHEMA public TO app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO app;
 
-CREATE ROLE dev_user;
-GRANT CONNECT ON DATABASE gidok TO dev_user;
-GRANT USAGE, CREATE ON SCHEMA public TO dev_user;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO dev_user;
-GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO dev_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE dev_user IN SCHEMA public
-GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO dev_user;
-ALTER DEFAULT PRIVILEGES FOR ROLE dev_user IN SCHEMA public
-GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO dev_user;
 
--- Assign roles to user
-GRANT app_user TO app;
-GRANT dev_user TO dev;
+CREATE USER dev WITH PASSWORD 'yourDevPassword';
+GRANT CONNECT ON DATABASE gidok TO dev;
+GRANT USAGE, CREATE ON SCHEMA public TO dev;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO dev;
+GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO dev;
+ALTER DEFAULT PRIVILEGES FOR ROLE dev IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO dev;
+ALTER DEFAULT PRIVILEGES FOR ROLE dev IN SCHEMA public
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO dev;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE dev IN SCHEMA public
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE dev IN SCHEMA public
+GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO app;
 
 SET SESSION AUTHORIZATION dev;
 
@@ -64,7 +66,7 @@ CREATE TABLE "projects" (
     "name" VARCHAR(100),
     "organization" VARCHAR(64),
     "description" TEXT,
-    "path" TEXT NOT NULL
+    "path" TEXT
 );
 
 -- Enum for user authorization roles in a project
