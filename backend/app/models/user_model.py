@@ -24,6 +24,9 @@ class TokenModel(BaseModel):
 
 
 class UserService:
+    def __init__(self, user: UserModel):
+        self.user = user
+        
     @staticmethod
     def create_user(userid: str, password: str, name: str,
                     phone: Optional[str] = None, email: Optional[str] = None,
