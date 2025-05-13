@@ -114,58 +114,29 @@ CREATE TYPE commit_status AS ENUM ('normal', 'push', 'merge');
 --   commit_sha256   : Unique hash representing the content snapshot
 --   project_id      : Associated project this commit belongs to
 --   user_id         : Author of the commit
+--   parent_id       : Parent commit
 --   date            : Timestamp when the commit was created
 --   title           : Short title or summary of the commit
 --   description     : Detailed message describing changes
 --   status          : Enum (default/push/merge) describing commit role/state
 --   mode            : Enum (release/develop/local) indicating context for this commit
-CREATE TABLE "project_commits" (
+CREATE TABLE "commits" (
     "id" SERIAL PRIMARY KEY,
     "commit_sha256" CHAR(64) NOT NULL,
     "project_id" INTEGER NOT NULL,
     "user_id" INTEGER NOT NULL,
+    "parent_id" INTEGER,
     "date" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "title" VARCHAR(200) NOT NULL,
     "description" TEXT NOT NULL,
     "status" commit_status NOT NULL DEFAULT 'normal',
     "mode" project_mode NOT NULL DEFAULT 'develop',
-    
-    FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE,
-    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
-);
-
--- Commit parent linkage table: tracks merge lineage between commits
--- Columns:
---   commit_id        : Child commit
---   parent_commit_id : Parent commit
--- Used for modeling history
-CREATE TABLE "commit_parents" (
-    "commit_id" INTEGER REFERENCES project_commits(id),
-    "parent_commit_id" INTEGER REFERENCES project_commits(id),
-    PRIMARY KEY ("commit_id", "parent_commit_id")
-);
-
--- Enum for commit command operations
--- 'insert': Insert new block(s) at specified index
--- 'delete': Remove block(s) between start and end index
--- 'edit'  : Modify existing block(s)
-CREATE TYPE commit_command AS ENUM ('insert', 'delete', 'edit');
-
--- Commit content: stores operation details for a block
--- Columns:
---   id                : Unique identifier for the commit content row
---   commit_id         : Foreign key linking to a project_commits row
---   command           : Operation type (insert, delete, edit)
---   start_block_index : Starting index for the operation
---   end_block_index   : Ending index (nullable if single block)
-CREATE TABLE "commit_content" (
-    "id" SERIAL PRIMARY KEY,
-    "commit_id" INTEGER NOT NULL,
-    "command" commit_command NOT NULL DEFAULT 'insert',
     "start_block_index" INTEGER NOT NULL,
-    "end_block_index" INTEGER,
+    "end_block_index" INTEGER Not NULL,
 
-    FOREIGN KEY ("commit_id") REFERENCES "project_commits"("id") ON DELETE CASCADE
+    FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("parent_id") REFERENCES "commits"("id") ON DELETE SET NULL
 );
 
 -- Blocks table: content blocks grouped by page and index
@@ -174,17 +145,32 @@ CREATE TABLE "commit_content" (
 --   page_number       : Which page the block appears on
 --   block_index       : Order of the block within the page
 --   content           : The actual text or content of the block
---   commit_content_id : Reference to the commit operation that created or modified this block
--- Each block is linked to a commit_content entry
+--   commit_id         : Reference to the commit operation that created or modified this block
+-- Each block is linked to a commit_id entry
 CREATE TABLE "blocks" (
     "project_id" INTEGER NOT NULL,
     "page_number" INTEGER NOT NULL,
     "block_index" INTEGER NOT NULL,
     "content" TEXT NOT NULL,
-    "commit_content_id" INTEGER NOT NULL,
+    "commit_id" INTEGER NOT NULL,
 
     FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE,
-    FOREIGN KEY ("commit_content_id") REFERENCES "commit_content"("id") ON DELETE CASCADE
+    FOREIGN KEY ("commit_id") REFERENCES "commits"("id") ON DELETE CASCADE
 );
 
+-- Pages table: content pages grouped by page
+-- Columns:
+--   project_id        : The project this block belongs to
+--   page_number       : Which page the block appears on
+--   content           : The actual text or content of the block
+--   commit_id : Reference to the commit operation that created or modified this block
+-- Each block is linked to a commit_content entry
+CREATE TABLE "pages" (
+    "project_id" INTEGER NOT NULL,
+    "content" TEXT NOT NULL,
+    "page_number" INTEGER NOT NULL,
+    "commit_id" INTEGER NOT NULL,
 
+    FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("commit_id") REFERENCES "commits"("id") ON DELETE CASCADE
+)
