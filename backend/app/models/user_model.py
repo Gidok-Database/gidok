@@ -1,5 +1,6 @@
 import bcrypt
 
+from psycopg2.extensions import cursor
 from pydantic import BaseModel, PrivateAttr
 from typing import Optional
 from db import get_connection
@@ -98,3 +99,20 @@ class UserService:
         user_model._id = user["id"]
         return user_model    
 
+    @staticmethod
+    def get_user_by_id(id, cursor: Optional[cursor]):
+        cursor.execute(
+            "SELECT * FROM  users WHERE id = %s",
+            (id,)
+        )
+        user = cursor.fetchone()
+        
+        if not user:
+            return None
+        user_model = UserModel(
+            name = user["name"],
+            userid = user["userid"],
+            password = ""
+        )
+        user_model._id = id
+        return user_model   
