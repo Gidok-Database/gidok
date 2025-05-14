@@ -130,7 +130,7 @@ CREATE TABLE "commits" (
     "title" VARCHAR(200) NOT NULL,
     "description" TEXT NOT NULL,
     "status" commit_status NOT NULL DEFAULT 'normal',
-    "mode" project_mode NOT NULL DEFAULT 'develop',
+    "mode" project_mode NOT NULL DEFAULT 'local',
     "start_block_index" INTEGER NOT NULL,
     "end_block_index" INTEGER Not NULL,
 

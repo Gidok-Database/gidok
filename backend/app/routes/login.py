@@ -4,13 +4,9 @@ from fastapi import APIRouter, Form, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from jose import jwt
-from typing import Optional
 
-from middlewares.auth import verify_token
 from models.user_model import UserModel, UserService, TokenModel
 from config import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
-from db import get_connection
-
 router = APIRouter()
 
 @router.post("/login")

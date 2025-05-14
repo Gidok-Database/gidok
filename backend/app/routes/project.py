@@ -8,7 +8,7 @@ from models.project_model import ProjectModel, ProjectService
 
 router = APIRouter()
 
-@router.post("/create")
+@router.post("/")
 async def create(project_form: ProjectModel, 
                  user: UserModel = Depends(verify_token)):
     project = ProjectService.create_project(project_form.name,
