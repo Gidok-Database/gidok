@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime, timezone
 
 from psycopg2.extensions import cursor
 from pydantic import BaseModel
@@ -39,7 +40,8 @@ class Commit:
             form.title or "",
             form.desc or "",
             f"{form.old_start}-{form.old_end}-{form.page}",
-            form.docs
+            form.docs,
+            str(datetime.now(timezone.utc))
         ])
 
         self.hash = hashlib.sha256(hash_source.encode()).hexdigest()
@@ -137,8 +139,6 @@ class Commit:
              )
         )
 
-
-
     @classmethod
     def get_commit(cls, *, project: "ProjectService", 
                    mode: Optional[str] = None,
@@ -146,9 +146,9 @@ class Commit:
                    id: Optional[int] = None,
                    cursor: Optional[cursor] = None):
         def from_row(row, cur) -> "Commit":
-            commit: Commit = cls.__new__()
+            commit: Commit = cls.__new__(cls)
             commit.project = project
-            commit.user = UserService.get_user_by_id(row["user_id"])
+            commit.user = UserService.get_user_by_id(row["user_id"], cur)
             commit._id = row["id"]
             commit.title = row["title"]
             commit.desc = row["description"]
@@ -171,6 +171,7 @@ class Commit:
         else:
             cur = cursor
             should_close = False
+
         try:
             commit_data = None
             if id != None:
@@ -191,7 +192,7 @@ class Commit:
                     WHERE commit_sha256 = %s
                       and project_id = %s
                     """,
-                    (project.project._id, hash)
+                    (hash, project.project._id)
                 )
                 commit_data = cur.fetchone()
                 if commit_data == None:

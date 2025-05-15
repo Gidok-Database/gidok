@@ -111,11 +111,12 @@ class ProjectService:
         project_model._id = project["id"]
         return cls(project_model)
 
-    def get_page(self, *, page: int, 
-                 mode: Optional[str] = None, 
+    def get_page(self, *, page: int,
                  user: Optional[UserModel] = None,
-                 commit: Optional[Commit] = None, 
+                 mode: Optional[str] = None,
+                 commit: Optional[Commit] = None,
                  cursor: Optional[cursor] = None):
+
         if cursor == None:
             conn = get_connection()
         
@@ -126,15 +127,19 @@ class ProjectService:
                 cur = cursor
 
             if commit == None and (mode == "release" or mode == "develop"):
-                commit = Commit.get_commit(mode=mode, project=self)
+                commit = Commit.get_commit(mode=mode, project=self, cursor=cur)
                 if commit == None:
                     return ""
-            elif commit == None and mode == "local" and user != None:
-                commit = Commit.get_commit(mode=mode, user= user, project=self)
-                if commit == None:
-                    return ""
-            else:
-                return None                
+
+            if commit == None \
+                or commit.max_page < page\
+                or (
+                    user != None
+                    and commit.status == "normal"
+                    and commit.user != user
+                ):
+                return None
+
             cur.execute(
                 """\
                     SELECT content FROM pages
@@ -147,6 +152,21 @@ class ProjectService:
             content = cur.fetchone()
             if content:
                 return content[0]
+            elif commit.mode == 'local':
+                cur.execute(
+                    """\
+                        SELECT content FROM pages
+                        WHERE project_id = %s
+                          and page_number = %s
+                          and commit_id = %s
+                    """,
+                    (self.project._id, page, commit.parent_id)
+                )
+                content = cur.fetchone()
+                if content:
+                    return content[0]
+                else:
+                    return None
 
             cur.execute(
                 """\
@@ -163,7 +183,7 @@ class ProjectService:
                             SELECT 1 FROM pages p
                             WHERE p.project_id = %s
                               and p.page_number = %s
-                              and p.commit_id != parent.id
+                              and p.commit_id == parent.id
                         )
                     )
                     SELECT * FROM commit_chain

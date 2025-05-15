@@ -100,7 +100,7 @@ class UserService:
         return user_model    
 
     @staticmethod
-    def get_user_by_id(id, cursor: Optional[cursor]):
+    def get_user_by_id(id, cursor: cursor):
         cursor.execute(
             "SELECT * FROM  users WHERE id = %s",
             (id,)
