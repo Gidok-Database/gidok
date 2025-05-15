@@ -1,0 +1,65 @@
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #fff;
+}
+
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 3.75rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid #ccc;
+}
+.top-nav .avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #5e5555;
+}
+.top-nav .nav-right {
+  display: flex;
+  gap: 1rem;
+}
+.top-nav .nav-right .icon, .top-nav .nav-right .profile {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #5e5555;
+}
+
+.body-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #fafafa;
+}
+.main-content .file-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.main-content .file-header select {
+  padding: 0.25rem 0.5rem;
+}
+.main-content .file-box {
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+.main-content .file-box .file-title {
+  margin: 0;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ccc;
+}
+.main-content .file-box .file-content {
+  margin: 2rem;
+  background-color: #fff;
+}
