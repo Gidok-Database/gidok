@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 from models.user_model import UserModel, UserService
 from db import get_connection
 
-class CommitForm(BaseModel):
+class CommitCreateForm(BaseModel):
     old_start: int
     old_end: int
     page: int
@@ -18,10 +18,13 @@ class CommitForm(BaseModel):
     title: Optional[str] = None
     desc: Optional[str] = None
 
+class CommitPatchForm(BaseModel):
+    hash: str
+    cmd: str
 
 
 class Commit:
-    def __init__(self, form: CommitForm, project: "ProjectService", 
+    def __init__(self, form: CommitCreateForm, project: "ProjectService", 
                  user: UserModel):
         
         self.project = project
@@ -51,12 +54,12 @@ class Commit:
             cursor.execute(
                 """\
                     SELECT c.id, c.max_page_number FROM commits c
-                    WHERE mode = 'develop'
+                    WHERE (mode = 'develop' or mode = 'release')
                       and project_id = %s
                       and NOT EXISTS (
                             SELECT 1 FROM commits child
-                            WHERE child.parent_id = id
-                              and mode = 'develop'
+                            WHERE child.parent_id = c.id
+                              and (mode = 'develop' or mode = 'release')
                         )
                     LIMIT 1
                 """,
@@ -71,13 +74,15 @@ class Commit:
             parent = _get_parent_commit(cur)
             if parent == None and self.page == 1:
                 self.parent_id = None
-                self.max_page = 1
+                self.max_page = 1,
+                parent_max_page = None
             elif parent["max_page_number"] + 1 >= self.page and self.page > 0:
                 self.parent_id = parent["id"]
                 self.max_page = max(parent["max_page_number"], self.page)
+                parent_max_page = parent["max_page_number"]
             else:
                 return None
-
+                
             params = [self.hash,
                       self.project.project._id,
                       self.user._id,
@@ -110,9 +115,11 @@ class Commit:
             self._id, self.date = cur.fetchone()
             for i, block in enumerate(self.blocks):
                 self._insert_block(block, i, cur)
-            self.project.insert_page(self.page, self, cur)
+                
+            self.project.insert_page(self.page, self, parent_max_page,cur)
             conn.commit()
-        except:
+        except Exception as e:
+            print(e)
             conn.rollback()
             return None
         finally:
@@ -205,7 +212,7 @@ class Commit:
                           and project_id = %s
                           and NOT EXISTS (
                                 SELECT 1 FROM commits child
-                                WHERE child.parent_id = id
+                                WHERE child.parent_id = c.id
                                   and mode = %s
                             )
                         LIMIT 1
@@ -239,3 +246,118 @@ class Commit:
         blocks = [row[0] for row in rows]
 
         return blocks, rows[0][1]
+    
+    @staticmethod
+    def push_commit(hash: str, project: "ProjectService", user: UserModel):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            commit: Commit = Commit.get_commit(hash=hash,project=project,cursor=cur)
+            if not commit or commit.user != user \
+              or commit.mode != "local" or commit.status != "normal":
+                return None
+            
+            cur.execute(
+                """\
+                    UPDATE commits
+                    SET status = 'push'
+                    WHERE id = %s
+                """,
+                (commit._id,)
+            )
+            conn.commit()
+        except:
+            return None
+        finally:
+            conn.close()
+
+        return commit.hash
+    
+    @staticmethod
+    def merge_commit(hash: str, project: "ProjectService"):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            commit: Commit = Commit.get_commit(hash=hash,project=project,cursor=cur)
+            if not commit or commit.mode != "local" or commit.status != "push":
+                return None
+            
+            cur.execute(
+                """\
+                    UPDATE commits
+                    SET status = 'merge',
+                        mode = 'develop'
+                    WHERE id = %s
+                """,
+                (commit._id, )
+            )
+            cur.execute(
+                """\
+                    DELETE FROM commits
+                    WHERE project_id = %s
+                      and mode = 'local'
+                      and ((start_block_index < %s and end_block_index > %s)
+                        or (start_block_index < %s and end_block_index > %s))
+                """,
+                (project.project._id, 
+                 commit.old_start, 
+                 commit.old_start,
+                 commit.old_end,
+                 commit.old_end)
+            )
+            old_len = commit.old_end - commit.old_start
+            new_len = len(commit.blocks)
+            
+            cur.execute(
+                """\
+                    UPDATE commits
+                    SET start_block_index = start_block_index + %s,
+                        end_block_index = end_block_index + %s
+                    WHERE %s <= start_block_index
+                """,
+                (new_len-old_len, new_len-old_len, commit.old_end)
+            )
+            
+            cur.execute(
+                """\
+                    UPDATE commits
+                    SET parent_id = %s,
+                        max_page_number = GREATEST(max_page_number, %s)
+                    WHERE project_id = %s
+                      and mode = 'local'
+                """,
+                (commit._id, commit.max_page, project.project._id)
+            )
+
+            project.update_page(commit, cur)
+            conn.commit()
+        except Exception as e:
+            print(e)
+            return None
+        finally:
+            conn.close()
+
+        return commit.hash
+        
+    @staticmethod
+    def promote_commit(project: "ProjectService"):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """\
+                    UPDATE commits
+                    SET mode = 'release'
+                    WHERE mode = 'develop'
+                      and project_id = %s
+                """,
+                (project.project._id,)
+            )
+            conn.commit()
+        except:
+            return False
+        finally:
+            conn.close()
+
+        return True
+        

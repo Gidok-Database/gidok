@@ -152,7 +152,7 @@ class ProjectService:
             content = cur.fetchone()
             if content:
                 return content[0]
-            elif commit.mode == 'local':
+            elif commit.mode == 'local' and commit.page != page:
                 cur.execute(
                     """\
                         SELECT content FROM pages
@@ -183,7 +183,7 @@ class ProjectService:
                             SELECT 1 FROM pages p
                             WHERE p.project_id = %s
                               and p.page_number = %s
-                              and p.commit_id == parent.id
+                              and p.commit_id = parent.id
                         )
                     )
                     SELECT * FROM commit_chain
@@ -191,21 +191,65 @@ class ProjectService:
                 """,
                 (commit._id, self.project._id, page)
             )
-            commit_list = cur.fetchall()
-            print(commit_list)
+            rows = cur.fetchall()
+            if not rows:
+                return None
+            cur.execute(
+                """\
+                    SELECT content FROM pages
+                    WHERE commit_id = %s
+                """,
+                (rows[0]["parent_id"],)
+            )
+            content = cur.fetchone()
+            if not content:
+                return None
+            content_blocks = content[0].split('\n')
+            
+            for row in rows:
+                cur.execute(
+                    """\
+                        SELECT content, page_number FROM blocks
+                        WHERE project_id = %s
+                          and commit_id = %s
+                        ORDER BY block_index ASC
+                    """,
+                    (self.project._id, row['id'])
+                )
+                block_rows = cur.fetchall()
+                if block_rows[0][1] != page:
+                    continue
+                blcoks = [block_ros[0] for block_ros in block_rows]
+                content_blocks = content_blocks[:row["start_block_index"]]+\
+                                blcoks+\
+                                content_blocks[row["end_block_index"]:]
+            content = "\n".join(content_blocks)
+            cur.execute(
+                """\
+                    INSERT INTO pages (
+                        project_id,
+                        content,
+                        page_number,
+                        commit_id
+                    )
+                    VALUES (%s, %s, %s, %s)
+                """,
+                (self.project._id, content, page, commit._id)
+            )
+            conn.commit()
         finally:
             if cursor == None:
                 conn.close()
-        return ""
+        return content
 
-    def insert_page(self, page: int, commit: Commit, cursor: cursor):
+    def insert_page(self, page: int, commit: Commit, parent_max_page: int, cursor: cursor):
         if page == 0:
             pass
         else:
-            if commit.parent_id == None:
+            if commit.parent_id == None or page > parent_max_page:
                 blocks = commit.blocks
             else:
-                parent = Commit.get_commit(commit.parent_id)
+                parent = Commit.get_commit(id=commit.parent_id, project=self,cursor=cursor)
                 parent_page = self.get_page(commit=parent, 
                                             page=commit.page, 
                                             cursor=cursor)
@@ -230,35 +274,53 @@ class ProjectService:
             )
 
     def update_page(self, commit: Commit, cursor: cursor):
-        #old: str = self.get_page(page=commit.page, commit=, cursor=cursor)
-        old = ""
-        old_blocks = old.split('\n')
-        new_blocks = old_blocks[:commit.old_start] +\
-                     commit.blocks +\
-                     old_blocks[commit.old_end:]
+        
         cursor.execute(
             """\
-            UPDATE pagesss
-            SET content = %s,
-                commit_id = %s
-            WHERE project_id = %s 
-              and commit_id = (
-                SELECT id FROM commits
-                WHERE user_id = %s 
-                  and project_id = %s
-                  and mode = %s
-                ORDER BY date DESC
-                OFFSET 1
-                LIMIT 1
-              )
-              and page_number = %s
-            """,
-            ("\n".join(new_blocks),
-             self.project._id,
-             commit._id,
-             commit.user._id,
-             self.project._id,
-             commit.mode,
-             commit.page
-            )
+                DELETE FROM pages
+                WHERE (
+                    SELECT mode FROM commits
+                    WHERE id = commit_id
+                ) = 'local'
+            """
         )
+        cursor.execute(
+            """\
+                SELECT * FROM commits
+                WHERE id = %s
+            """,(commit.parent_id,)
+        )
+        parent = cursor.fetchone()
+        
+        if parent == None:
+            return
+        elif parent["mode"] == "release":
+            cursor.execute(
+                """\
+                    INSERT INTO pages (
+                        project_id,
+                        content,
+                        page_number,
+                        commit_id
+                    ) 
+                    SELECT project_id, 
+                           content, 
+                           page_number,
+                           %s
+                    FROM pages
+                    WHERE commit_id = %s
+                      and page_number != %s
+                """,
+                (commit._id, commit.parent_id, commit.page)
+            )
+        else:
+            cursor.execute(
+                """\
+                    UPDATE pages
+                    SET commit_id = %s
+                    WHERE commit_id = %s
+                      and page_number != %s
+                """,
+                (commit._id, commit.parent_id, commit.page)
+            )
+        
