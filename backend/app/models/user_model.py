@@ -116,3 +116,30 @@ class UserService:
         )
         user_model._id = id
         return user_model   
+
+    @staticmethod
+    def search_user(user_id:Optional[str], 
+                    user_name:Optional[str], 
+                    user_email:Optional[str],
+                    start: int, end: int, order: str):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f"""\
+                    SELECT name, userid, email, organization, description
+                    FROM users
+                    WHERE (%s IS NULL OR userid = %s)
+                      AND (%s IS NULL OR name ILIKE %s)
+                      AND (%s IS NULL OR email = %s)
+                    ORDER BY name {order}
+                    LIMIT %s OFFSET %s
+                """,
+                (user_id, user_id, user_name, f"%{user_name}%", 
+                 user_email, user_email, end-start, start)
+            )
+            users = cur.fetchall()
+        finally:
+            conn.close()
+        
+        return users

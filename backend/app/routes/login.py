@@ -4,6 +4,7 @@ from fastapi import APIRouter, Form, Depends, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from jose import jwt
+from typing import Optional
 
 from models.user_model import UserModel, UserService, TokenModel
 from config import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
@@ -79,3 +80,24 @@ async def signup(user: UserModel):
             status_code=400,
             content={"msg": "회원가입 실패"}
         )
+    
+@router.get("/")
+def search_user(user_id: Optional[str] = None, 
+                user_name: Optional[str] = None, 
+                user_email: Optional[str] = None, 
+                start: int = 0,
+                end: int = 10,
+                order: str = "ASC"):
+    if order not in ["ASC", "DESC"]:
+        return {"msg": "error"}
+    columns = ["name", "userid", "email", "organization", "description"]
+    users = [
+        dict(zip(columns, row))
+        for row in UserService.search_user(user_id=user_id, user_name=user_name,
+                                user_email=user_email, start=start,
+                                end=end, order=order)
+    ]
+    if not users:
+        return {"msg": "검색하신 유저를 찾을 수 없습니다."}
+    
+    return users
