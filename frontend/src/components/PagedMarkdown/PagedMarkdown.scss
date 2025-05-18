@@ -1,0 +1,64 @@
+.paged-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  position: relative;
+}
+
+.paged-markdown {
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 2rem;
+  scroll-behavior: smooth;
+  background-color: #e5e5e5;
+
+  // ✅ 콘텐츠 실제 너비보다 더 크게 만들어줘야 잘리지 않음
+  min-width: max-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+}
+
+/* 아래로 옮긴 가짜 스크롤바 */
+.scrollbar-bottom {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 16px;
+  background-color: #f1f1f1;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+
+  & > div {
+    height: 1px;
+    margin-left: 2rem; // ⬅ 실제 좌측 여백 조정
+  }
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #999;
+    border-radius: 4px;
+  }
+}
+
+.a4-page {
+  width: 794px;
+  min-height: 1123px;
+  padding: 2rem;
+  background: white;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  margin: 0 0 2rem 2rem; // ⬅ 왼쪽 여백 명시
+  position: relative;
+}
+
+.page-number {
+  position: absolute;
+  bottom: 1rem;
+  right: 2rem;
+  font-size: 0.85rem;
+  color: #888;
+}
