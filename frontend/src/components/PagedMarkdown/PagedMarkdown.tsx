@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import "@/components/PagedMarkdown/PagedMarkdown.css";
 
@@ -7,6 +7,10 @@ interface Props {
 }
 
 export default function PagedMarkdown({ pages }: Props) {
+  const [markdownPages, setMarkdownPages] = useState(pages);
+  const [modalIndex, setModalIndex] = useState<number | null>(null);
+  const [modalContent, setModalContent] = useState("");
+
   const topScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
 
@@ -22,7 +26,20 @@ export default function PagedMarkdown({ pages }: Props) {
     }
   };
 
-  const scrollWidth = pages.length > 0 ? 800 : 0;
+  const scrollWidth = markdownPages.length > 0 ? 800 : 0;
+
+  const openModal = (index: number) => {
+    setModalIndex(index);
+    setModalContent(markdownPages[index]);
+  };
+
+  const saveModal = () => {
+    if (modalIndex === null) return;
+    const updated = [...markdownPages];
+    updated[modalIndex] = modalContent;
+    setMarkdownPages(updated);
+    setModalIndex(null);
+  };
 
   return (
     <div className="paged-container">
@@ -31,15 +48,36 @@ export default function PagedMarkdown({ pages }: Props) {
         <div style={{ width: `${scrollWidth}px`, height: 1 }} />
       </div>
 
-      {/* 페이지 내용 */}
+      {/* 본문 */}
       <div className="paged-markdown" ref={contentScrollRef} onScroll={handleScroll}>
-        {pages.map((md, idx) => (
+        {markdownPages.map((content, idx) => (
           <div id={`page-${idx}`} className="a4-page" key={idx}>
-            <ReactMarkdown>{md}</ReactMarkdown>
+            <div className="page-toolbar">
+              <span>Page {idx + 1}</span>
+              <button onClick={() => openModal(idx)}>편집하기</button>
+            </div>
+            <ReactMarkdown>{content}</ReactMarkdown>
             <div className="page-number">Page {idx + 1}</div>
           </div>
         ))}
       </div>
+
+      {/* 모달 */}
+      {modalIndex !== null && (
+        <div className="edit-modal-backdrop">
+          <div className="edit-modal">
+            <h3>Page {modalIndex + 1} 수정</h3>
+            <textarea
+              value={modalContent}
+              onChange={(e) => setModalContent(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button onClick={saveModal}>저장</button>
+              <button onClick={() => setModalIndex(null)}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
