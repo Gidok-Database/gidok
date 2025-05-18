@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional
 
 from middlewares.get_user import get_current_user
-from models.user_model import UserModel
+from models.user_model import UserModel, UserService
 from models.project_model import ProjectModel, ProjectService
 from models.commit_model import Commit
 
@@ -37,7 +37,24 @@ async def create(project_form: ProjectModel,
     return {"msg": "프로젝트 생성 성공", 
             "project_id": project.project._id}
 
+@router.get("/search")
+def search_project(name: str = "", start: int = 0, end: int = 10, 
+                   order: str = "ASC", role: Optional[str] = None, userid: Optional[str] = None):
+    
+    if order not in ["ASC", "DESC"]:
+        return {"msg": "error"}
+    if role not in [None, "admin", "member", "viewer"]:
+        return {"msg": "error"}
+    if role and not userid:
+        return {"msg": "error"}
+    columns = ["id", "name", "organization", "description"]
+    projects = [
+        dict(zip(columns, row))
+        for row in ProjectService.search_project(name=name, start=start,
+                                end=end, order=order, role=role, userid=userid)
+    ]
 
+    return projects
 
 @router.get("/{project_id}")
 async def view(project_id: int, page: int, mode: Optional[str] = None,

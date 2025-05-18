@@ -111,6 +111,35 @@ class ProjectService:
         project_model._id = project["id"]
         return cls(project_model)
 
+    @staticmethod
+    def search_project(name: str, start:int, end:int, order: str,
+                       role: Optional[str], userid: Optional[str]):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                f"""\
+                    SELECT p.id, p.name, p.organization, p.description
+                    FROM projects p
+                    JOIN auth a ON p.id = a.project_id
+                    JOIN users u ON u.id = a.user_id
+                    WHERE p.name LIKE %s
+                      and (%s IS NULL or a.role = %s)
+                      and (%s IS NULL or u.userid=%s)
+                    ORDER BY p.name {order}
+                    LIMIT %s OFFSET %s
+                """,
+                (f"%{name}%", role, role,
+                 userid, userid,
+                 end-start, start)
+            )
+            projects = cur.fetchall()
+            conn.commit()
+        finally:
+            conn.close()
+        return projects
+        
+
     def get_page(self, *, page: int,
                  user: Optional[UserModel] = None,
                  mode: Optional[str] = None,
