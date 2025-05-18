@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional
 
-from middlewares.auth import verify_token
+from middlewares.get_user import get_current_user
 from models.user_model import UserModel
 from models.project_model import ProjectModel, ProjectService
 from models.commit_model import Commit
@@ -11,7 +11,13 @@ router = APIRouter()
 
 @router.post("/")
 async def create(project_form: ProjectModel, 
-                 user: UserModel = Depends(verify_token)):
+                 user: UserModel = Depends(get_current_user)):
+    if user == None:
+        return JSONResponse(
+            status_code=400,
+            content={"msg": "로그인이 필요합니다."}
+        )
+
     project = ProjectService.create_project(project_form.name,
                                             project_form.org,
                                             project_form.desc)
@@ -31,10 +37,17 @@ async def create(project_form: ProjectModel,
     return {"msg": "프로젝트 생성 성공", 
             "project_id": project.project._id}
 
+
+
 @router.get("/{project_id}")
-def view(project_id: int, page: int, mode: Optional[str] = None,
+async def view(project_id: int, page: int, mode: Optional[str] = None,
          hash: Optional[str] = None,
-         user: UserModel = Depends(verify_token)):
+         user: UserModel = Depends(get_current_user)):
+    if user == None:
+        return JSONResponse(
+            status_code=400,
+            content={"msg": "로그인이 필요합니다."}
+        )
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(user)
     
@@ -53,3 +66,4 @@ def view(project_id: int, page: int, mode: Optional[str] = None,
         return {"msg": "페이지가 없거나 권한이 없음"}
 
     return {"docs":page}
+

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from middlewares.auth import verify_token
+from middlewares.get_user import get_current_user
 from models.user_model import UserModel
 from models.project_model import ProjectService
 from models.commit_model import CommitCreateForm, CommitPatchForm, Commit
@@ -9,7 +9,9 @@ router = APIRouter()
 
 @router.post("/{project_id}")
 def create_commit(project_id: int, commit_form: CommitCreateForm,
-                  user: UserModel = Depends(verify_token)):
+                  user: UserModel = Depends(get_current_user)):
+    if user == None:
+        return {"msg":"error"}
     project = ProjectService.get_project(project_id)
 
     if project.get_user_auth_level(user) >= 2:
@@ -29,7 +31,9 @@ def create_commit(project_id: int, commit_form: CommitCreateForm,
 
 @router.patch("/{project_id}")
 def patch_commit(project_id: int, commit_form: CommitPatchForm,
-                 user: UserModel = Depends(verify_token)):
+                 user: UserModel = Depends(get_current_user)):
+    if user == None:
+        return {"msg":"error"}
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(user)
 
