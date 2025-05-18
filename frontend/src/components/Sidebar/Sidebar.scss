@@ -2,35 +2,47 @@
   position: relative;
   overflow-x: hidden;
   overflow-y: auto;
+  width: 14rem;
+  background-color: #f5f5f5;
+  border-right: 1px solid #ddd;
+  transition: width 0.3s ease;
 
-  .collapse-toggle {
-    position: absolute;
-    top: 1rem;
-    right: -0.75rem;
-    width: 1.8rem;
-    height: 1.8rem;
-    border: none;
-    border-radius: 50%;
-    border: solid 1px #000;
-    background-color: #ffffff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
+  &.collapsed {
+    width: 0;
+  }
+}
 
-    &:hover {
-      background-color: #f0f0f0;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    }
+.collapse-toggle {
+  position: fixed;
+  top: 5rem;
+  left: 13.5rem;
+  z-index: 1000;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 
-    .material-symbols-outlined {
-      font-size: 1.2rem;
-      color: #333;
-    }
+  &.collapsed {
+    left: 0.8rem;
+  }
+
+  &:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .material-symbols-outlined {
+    font-size: 1.2rem;
+    color: #333;
   }
 }
 
@@ -39,9 +51,7 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1.2rem;
-  max-height: 100vh;
   background-color: #fafafa;
-  border-right: 1px solid #ddd;
 }
 
 .thumbnail-wrapper {
@@ -80,12 +90,15 @@
     line-height: 1.2;
     color: #333;
 
-    h1, h2, h3 {
+    h1,
+    h2,
+    h3 {
       font-size: 0.6rem;
       margin: 0.2rem 0;
     }
 
-    p, li {
+    p,
+    li {
       margin: 0.2rem 0;
     }
   }

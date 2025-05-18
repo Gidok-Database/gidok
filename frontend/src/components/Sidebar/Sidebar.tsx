@@ -17,9 +17,31 @@ export default function Sidebar({ pages }: SidebarProps) {
   };
 
   return (
-    <aside className={`left-panel ${collapsed ? "collapsed" : ""}`}>
+    <>
+      <aside className={`left-panel ${collapsed ? "collapsed" : ""}`}>
+        {!collapsed && (
+          <div className="preview-thumbnails">
+            <p className="preview-title">목차</p>
+            {pages.map((content, i) => (
+              <div
+                key={i}
+                className="thumbnail-wrapper"
+                onClick={() => scrollToPage(i)}
+              >
+                <div className="thumbnail-box">
+                  <div className="thumbnail-a4">
+                    <ReactMarkdown>{content}</ReactMarkdown>
+                  </div>
+                  <span className="page-label">Page {i + 1}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </aside>
+
       <button
-        className="collapse-toggle"
+        className={`collapse-toggle ${collapsed ? "collapsed" : ""}`}
         onClick={() => setCollapsed(!collapsed)}
         title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
       >
@@ -27,26 +49,6 @@ export default function Sidebar({ pages }: SidebarProps) {
           {collapsed ? "chevron_right" : "chevron_left"}
         </span>
       </button>
-
-      {!collapsed && (
-        <div className="preview-thumbnails">
-          <p className="preview-title">목차</p>
-          {pages.map((content, i) => (
-            <div
-              key={i}
-              className="thumbnail-wrapper"
-              onClick={() => scrollToPage(i)}
-            >
-              <div className="thumbnail-box">
-                <div className="thumbnail-a4">
-                  <ReactMarkdown>{content}</ReactMarkdown>
-                </div>
-                <span className="page-label">Page {i + 1}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </aside>
+    </>
   );
 }
