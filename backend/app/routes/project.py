@@ -84,3 +84,26 @@ async def view(project_id: int, page: int, mode: Optional[str] = None,
 
     return {"docs":page}
 
+@router.patch("/{project_id}")
+def edit(project_id: int, role: str, userid: str, 
+         current_user: UserModel = Depends(get_current_user)):
+    if current_user == None:
+        return {"msg": "로그인이 필요합니다."}
+    if role not in ["admin", "member", "viewer"]:
+        return {"msg": "error"}
+    
+    project = ProjectService.get_project(project_id)
+    auth_level = project.get_user_auth_level(current_user)
+    
+    if auth_level != 0:
+        return {"msg": "권한이 없음"}
+    
+    user = UserService.get_user(userid)
+    if not user:
+        return {"msg": "유저가 없음"}
+    
+    if not project.add_user_role(user, role):
+        return {"msg": "error"}
+
+    return {"msg": "success"}
+    

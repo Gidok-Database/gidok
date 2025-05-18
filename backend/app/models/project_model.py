@@ -62,6 +62,44 @@ class ProjectService:
         
         return True
     
+    def add_user_role(self, user: UserModel, role: str):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """\
+                SELECT role FROM auth
+                WHERE project_id = %s and user_id = %s
+                """,
+                (self.project._id, user._id)
+            )
+            row = cur.fetchone()
+            if row:
+                cur.execute(
+                    """\
+                        UPDATE auth
+                        SET role = %s
+                        WHERE project_id = %s and user_id = %s
+                    """,
+                    (role, self.project._id, user._id)
+                )
+            else:
+                cur.execute(
+                    """\
+                    INSERT INTO auth (project_id, user_id, role)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (self.project._id, user._id, role)
+                )
+            conn.commit()
+        except:
+            return False
+        finally:
+            conn.close()
+        
+        return True
+
+    
     def get_user_auth_level(self, user: UserModel):
         auth_level = {"admin": 0, "member": 1, "viewer": 2}
         conn = get_connection()
