@@ -1,10 +1,11 @@
+import psycopg2
 import bcrypt
 
+from fastapi import HTTPException, status
 from psycopg2.extensions import cursor
 from pydantic import BaseModel, PrivateAttr
 from typing import Optional
 from db import get_connection
-
 
 class UserModel(BaseModel):
     _id: int = PrivateAttr()
@@ -45,10 +46,11 @@ class UserService:
                  phone, email, org, desc)
             )
             conn.commit()
+        except psycopg2.errors.UniqueViolation:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 존재하는 아이디입니다")
         except Exception as e:
-            # todo: raise
             print(e)
-            return False
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="서버 오류")
         finally:
             conn.close()
         return True
@@ -64,9 +66,8 @@ class UserService:
             )
             user = cur.fetchone()
         except Exception as e:
-            # todo: raise
             print(e)
-            return None
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="서버 오류")
         finally:
             conn.close()
         if not user or not bcrypt.checkpw(password.encode(), user["password"].encode()):
@@ -84,9 +85,9 @@ class UserService:
                 (user_id,)
             )
             user = cur.fetchone()
-        except:
-            # todo: raise
-            return None
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="서버 오류")
         finally:
             conn.close()
         if not user:
@@ -115,7 +116,7 @@ class UserService:
             password = ""
         )
         user_model._id = id
-        return user_model   
+        return user_model
 
     @staticmethod
     def search_user(user_id:Optional[str], 

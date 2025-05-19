@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime, timezone
 
-from fastapi import APIRouter, Form, Depends, Response
+from fastapi import APIRouter, Form, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from jose import jwt
@@ -34,9 +34,9 @@ async def login(
         )
         return {"msg": "로그인 성공"}
     else:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "아이디 또는 비밀번호가 일치하지 않습니다"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="아이디 또는 비밀번호가 일치하지 않습니다",
         )
     
 @router.post("/get_token", response_model=TokenModel)
@@ -57,29 +57,64 @@ async def login(
         "user_id": userid
         }
     else:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "아이디 또는 비밀번호가 일치하지 않습니다"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="아이디 또는 비밀번호가 일치하지 않습니다",
         )
 
 @router.post("/signup")
 async def signup(user: UserModel):
-    if not user.password2:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "두번째 패스워드를 입력해주세요"}
+    if not user.userid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ID를 입력해주세요",
         )
-
-    #todo: validation logic ex) password == password2
+    
+    if not user.name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이름을 입력해주세요",
+        )
+    
+    if not user.password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="비밀번호를 입력해주세요",
+        )
+    
+    if not user.password2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="비밀번호를 입력해주세요",
+        )
+    
+    if not user.phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="전화번호를 입력해주세요",
+        )
+    
+    if not user.email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="이메일을 입력해주세요",
+        )
+    
+    if not user.password == user.password2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="비밀번호가 일치하지 않습니다",
+        )
 
     if UserService.create_user(user.userid, user.password, user.name,
                                user.phone, user.email, user.org, user.desc):
         return {"msg": "회원가입 성공"}
     else:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "회원가입 실패"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="회원가입 실패",
         )
+        
     
 @router.get("/")
 def search_user(user_id: Optional[str] = None, 
@@ -89,7 +124,10 @@ def search_user(user_id: Optional[str] = None,
                 end: int = 10,
                 order: str = "ASC"):
     if order not in ["ASC", "DESC"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="정렬 방식이 잘못되었습니다.",
+        )
     columns = ["name", "userid", "email", "organization", "description"]
     users = [
         dict(zip(columns, row))
@@ -98,6 +136,9 @@ def search_user(user_id: Optional[str] = None,
                                 end=end, order=order)
     ]
     if not users:
-        return {"msg": "검색하신 유저를 찾을 수 없습니다."}
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="검색하신 유저를 찾을 수 없습니다.",
+        )
     
     return users
