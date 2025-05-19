@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 
 from psycopg2.extensions import cursor
 from pydantic import BaseModel
@@ -361,3 +361,125 @@ class Commit:
 
         return True
         
+    @staticmethod
+    def search_without_chain(project: "ProjectService",
+                             user_id: Optional[str],
+                             status: Optional[str],
+                             mode: Optional[str],
+                             title: Optional[str],
+                             start_date: Optional[date],
+                             end_date: Optional[date],
+                             start: int, 
+                             end:int):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """\
+                    SELECT c.commit_sha256,
+                           u.userid,
+                           u.name,
+                           c.date,
+                           c.title,
+                           c.description,
+                           c.status,
+                           c.mode,
+                           c.max_page_number,
+                           p.commit_sha256
+                    FROM commits c
+                    JOIN users u ON u.id = c.user_id
+                    LEFT JOIN commits p ON p.id = c.parent_id
+                    WHERE c.project_id = %s
+                      and (%s IS NULL or u.userid = %s)
+                      and (%s IS NULL or c.status = %s)
+                      and (%s IS NULL or c.mode = %s)
+                      and (%s IS NULL or c.title LIKE %s)
+                      and (%s IS NULL or c.date BETWEEN %s AND %s)
+                    LIMIT %s OFFSET %s
+                """,
+                (project.project._id,
+                 user_id, user_id,
+                 status, status,
+                 mode, mode,
+                 title, f"%{title}%",
+                 start_date, start_date, end_date,
+                 end-start, start
+                 )
+            )
+            rows = cur.fetchall()
+        finally:
+            conn.close()
+        
+        return rows
+        
+    @staticmethod
+    def search_with_chain(project: "ProjectService",
+                          start_hash: Optional[str],
+                          mode: Optional[str],
+                          start: int,
+                          end: int):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            
+            cur.execute(
+                """\
+                    WITH RECURSIVE commit_chain AS (
+                        SELECT curr_commit.*,
+                               curr_parent.commit_sha256 AS parent_sha256, 
+                               0 AS depth
+                        FROM commits curr_commit
+                        LEFT JOIN commits curr_parent 
+                            ON curr_parent.id = curr_commit.parent_id
+                        WHERE curr_commit.project_id = %s
+                          and (%s IS NULL or curr_commit.commit_sha256 = %s)
+                          and (%s is NULL or (
+                                (curr_commit.mode = %s or curr_commit.mode = 'release')
+                                and NOT EXISTS(
+                                    SELECT 1 FROM commits child
+                                    WHERE child.parent_id = curr_commit.id
+                                    and (child.mode = %s or child.mode = 'release')
+                                ))
+                              )
+                        UNION ALL
+
+                        SELECT 
+                            prev_commit.*,
+                            prev_parent.commit_sha256 AS parent_sha256, 
+                            chain.depth + 1
+                        FROM commits prev_commit
+                        LEFT JOIN commits prev_parent 
+                            ON prev_parent.id = prev_commit.parent_id
+                        INNER JOIN commit_chain chain
+                            ON chain.parent_id = prev_commit.id
+                        WHERE chain.depth < %s
+                    )
+
+                    SELECT 
+                        cc.commit_sha256,
+                        u.userid,
+                        u.name,
+                        cc.date,
+                        cc.title,
+                        cc.description,
+                        cc.status,
+                        cc.mode,
+                        cc.max_page_number,
+                        cc.parent_sha256
+                    FROM commit_chain cc
+                    JOIN users u ON u.id = cc.user_id
+                    ORDER BY depth ASC
+                    OFFSET %s
+                """,
+                (project.project._id, 
+                 start_hash, start_hash,
+                 mode, mode, mode,
+                 end,
+                 start
+                 )
+            )
+            rows = cur.fetchall()
+        finally:
+            conn.close()
+        
+        return rows
