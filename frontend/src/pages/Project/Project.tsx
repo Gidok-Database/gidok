@@ -70,6 +70,7 @@ export default function Project() {
     { userid: 'kar7mp5', role: 'admin' },
     { userid: 'user123', role: 'viewer' },
   ]);
+  const [pendingChange, setPendingChange] = useState<{ userid: string; role: 'admin' | 'viewer' } | null>(null);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -111,8 +112,18 @@ export default function Project() {
     pdf.save("새 문서.pdf");
   };
 
-  const handleRoleChange = (userid: string, newRole: 'admin' | 'viewer') => {
-    setMembers((prev) => prev.map(m => m.userid === userid ? { ...m, role: newRole } : m));
+  const confirmRoleChange = () => {
+    if (pendingChange) {
+      const { userid, role } = pendingChange;
+      setMembers((prev) =>
+        prev.map((m) => (m.userid === userid ? { ...m, role } : m))
+      );
+      setPendingChange(null);
+    }
+  };
+
+  const cancelRoleChange = () => {
+    setPendingChange(null);
   };
 
   const toggleSettings = () => {
@@ -174,21 +185,47 @@ export default function Project() {
         <aside className={`settings-panel ${showSettings ? "show" : ""}`}>
           <h3>프로젝트 설정</h3>
           <h4>유저 권한 관리</h4>
-          <ul>
-            {members.map((member) => (
-              <li key={member.userid}>
-                <span>{member.userid}</span>
-                <select
-                  value={member.role}
-                  onChange={(e) => handleRoleChange(member.userid, e.target.value as 'admin' | 'viewer')}
-                >
-                  <option value="admin">관리자</option>
-                  <option value="viewer">일반 사용자</option>
-                </select>
-              </li>
-            ))}
-          </ul>
+          <table className="permissions-table">
+            <thead>
+              <tr>
+                <th>유저</th>
+                <th>역할</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((member) => (
+                <tr key={member.userid}>
+                  <td>{member.userid}</td>
+                  <td>
+                    <select
+                      value={member.role}
+                      onChange={(e) =>
+                        setPendingChange({ userid: member.userid, role: e.target.value as 'admin' | 'viewer' })
+                      }
+                    >
+                      <option value="admin">관리자</option>
+                      <option value="viewer">읽기 전용</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </aside>
+
+        {pendingChange && (
+          <div className="confirm-modal-backdrop">
+            <div className="confirm-modal">
+              <p>
+                {pendingChange.userid} 님의 역할을 "{pendingChange.role}"(으)로 변경하시겠습니까?
+              </p>
+              <div className="modal-actions">
+                <button onClick={confirmRoleChange}>확인</button>
+                <button onClick={cancelRoleChange}>취소</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="history-panel-wrapper">
           <aside className={`history-panel ${showHistory ? "show" : ""}`}>
