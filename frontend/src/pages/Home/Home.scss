@@ -1,89 +1,99 @@
-.layout-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    background-color: #fff;
-  }
-  
-  .top-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 3.75rem;
-    padding: 0 1rem;
-    border-bottom: 1px solid #ccc;
-  
+.github-page {
+  display: flex;
+  background-color: #fff;
+  color: #24292f;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+
+  .profile-sidebar {
+    width: 260px;
+    padding: 2rem;
+    border-right: 1px solid #e1e4e8;
+    text-align: center;
+
     .avatar {
-      width: 2rem;
-      height: 2rem;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      background-color: #5e5555;
-    }
-  
-    .nav-right {
-      display: flex;
-      gap: 1rem;
-  
-      .icon, .profile {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        background-color: #5e5555;
-      }
-    }
-  }
-  
-  .body-container {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-  
-  .main-content {
-    flex: 1;
-    padding: 1rem;
-    overflow-y: auto;
-    background-color: #fafafa;
-  
-    .file-header {
-      display: flex;
-      gap: 1rem;
       margin-bottom: 1rem;
-  
-      select {
-        padding: 0.25rem 0.5rem;
-      }
     }
-  
-    .file-box {
-      background-color: #fff;
-      border: 1px solid #ccc;
 
-      .file-title {
-        margin: 0;
-        padding: 0.5rem;
-        border-bottom: 1px solid #ccc;
-      }
+    .username {
+      font-size: 0.9rem;
+      color: #57606a;
+      margin-bottom: 0.5rem;
+    }
 
-      .file-content {
-        margin: 2rem;
-        // height: 20rem;
-        background-color: #fff;
-      }
+    .bio {
+      font-size: 0.85rem;
+      color: #24292f;
+      margin: 0.5rem 0;
+    }
+
+    .location,
+    .follow {
+      font-size: 0.85rem;
+      color: #57606a;
+      margin-top: 0.25rem;
     }
   }
-  
-.export-button {
-  margin-right: 1rem;
-  padding: 0.4rem 1rem;
-  border: none;
-  background-color: #4a90e2;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
 
-  &:hover {
-    background-color: #357bd8;
+  .repo-list-area {
+    flex: 1;
+    padding: 2rem;
+
+    .repo-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1.5rem;
+    }
+
+    .repo-list {
+      list-style: none;
+      padding: 0;
+
+      .repo-item {
+        border-top: 1px solid #d8dee4;
+        padding: 1rem 0;
+
+        .repo-top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.3rem;
+
+          .repo-name {
+            font-weight: 600;
+            font-size: 1rem;
+          }
+
+          .perm-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 1rem;
+            border: 1px solid #d0d7de;
+
+            &.admin {
+              background-color: #e8f0fe;
+              color: #1c5ed6;
+            }
+
+            &.user {
+              background-color: #f6f8fa;
+              color: #57606a;
+            }
+          }
+        }
+
+        .repo-meta {
+          font-size: 0.85rem;
+          color: #57606a;
+
+          span {
+            margin-right: 1rem;
+          }
+        }
+      }
+    }
   }
 }
