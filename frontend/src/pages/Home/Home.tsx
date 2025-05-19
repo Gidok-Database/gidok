@@ -53,7 +53,7 @@ export default function Home() {
       </aside>
 
       <main className="repo-list-area">
-        <h1 className="repo-title">Repositories</h1>
+        <h1 className="repo-title">프로젝트</h1>
         <ProjectForm onAdd={handleAddRepository} />
         <ul className="repo-list">
           {repositories.map((repo, i) => (
