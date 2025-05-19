@@ -88,6 +88,13 @@ export default function Project() {
     }, 100);
   };
 
+  const handleDeletePage = (index: number) => {
+    setMarkdownPages(prev => prev.filter((_, i) => i !== index));
+    if (selectedPage >= index) {
+      setSelectedPage(prev => Math.max(0, prev - 1));
+    }
+  };
+
   const handleExportPdf = async () => {
     const container = previewRef.current;
     if (!container) return;
@@ -175,7 +182,11 @@ export default function Project() {
         <Sidebar pages={markdownPages} />
         <main className="main-content preview-mode">
           <div className="document-preview" ref={previewRef}>
-            <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} />
+            <PagedMarkdown
+              pages={markdownPages}
+              onUpdate={handlePageUpdate}
+              onDelete={handleDeletePage} // ✅ 여기에 삭제 함수 전달
+            />
             <div className="add-page-button" onClick={handleAddPage}>
               <span className="material-symbols-outlined">add_circle</span>
             </div>

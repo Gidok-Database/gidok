@@ -1,13 +1,14 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import "@/components/PagedMarkdown/PagedMarkdown.css";
 
 interface Props {
   pages: string[];
   onUpdate: (index: number, content: string, message: string) => void;
+  onDelete: (index: number) => void; // ✅ 삭제 콜백 추가
 }
 
-export default function PagedMarkdown({ pages, onUpdate }: Props) {
+export default function PagedMarkdown({ pages, onUpdate, onDelete }: Props) {
   const [modalIndex, setModalIndex] = useState<number | null>(null);
   const [modalContent, setModalContent] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
@@ -50,6 +51,13 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
     setModalIndex(null);
   };
 
+  const handleDelete = (index: number) => {
+    const confirmed = window.confirm(`Page ${index + 1}을 삭제하시겠습니까?`);
+    if (confirmed) {
+      onDelete(index);
+    }
+  };
+
   return (
     <div className="paged-container">
       <div className="scrollbar-top" ref={topScrollRef} onScroll={handleTopScroll}>
@@ -58,12 +66,17 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
 
       <div className="paged-markdown" ref={contentScrollRef} onScroll={handleScroll}>
         {pages.map((content, idx) => (
-          <div id={`page-${idx}`} className="a4-page" key={idx}>
+          <div key={idx} className="page-wrapper">
             <div className="page-toolbar">
               <button onClick={() => openModal(idx)}>편집하기</button>
+              <button onClick={() => handleDelete(idx)} style={{ marginLeft: "0.5rem", color: "red" }}>
+                삭제
+              </button>
             </div>
-            <ReactMarkdown>{content}</ReactMarkdown>
-            <div className="page-number">Page {idx + 1}</div>
+            <div id={`page-${idx}`} className="a4-page">
+              <ReactMarkdown>{content}</ReactMarkdown>
+              <div className="page-number">Page {idx + 1}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -72,14 +85,12 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
         <div className="edit-modal-backdrop">
           <div className="edit-modal">
             <h3>Page {modalIndex + 1} 수정</h3>
-            {/* 🔼 커밋 메시지를 먼저 입력 */}
             <textarea
               className="commit-message-input"
               value={commitMessage}
               onChange={(e) => setCommitMessage(e.target.value)}
               placeholder="커밋 메시지를 입력하세요"
             />
-            {/* 🔽 문서 본문 수정 */}
             <textarea
               className="content-editor"
               value={modalContent}
