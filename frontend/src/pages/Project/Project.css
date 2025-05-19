@@ -96,15 +96,30 @@
 }
 
 /* ✅ 히스토리 패널 디자인 */
+.history-panel-wrapper {
+  position: relative;
+}
+
 .history-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 300px;
+  height: 100%;
   background-color: #f9f9f9;
   border-left: 1px solid #ddd;
   padding: 1.5rem 1rem;
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease-in-out;
   overflow-y: auto;
   z-index: 100;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.history-panel.show {
+  transform: translateX(0);
+  opacity: 1;
 }
 
 .history-panel h3 {
