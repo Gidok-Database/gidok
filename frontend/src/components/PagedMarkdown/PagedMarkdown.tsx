@@ -1,13 +1,13 @@
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import "@/components/PagedMarkdown/PagedMarkdown.css";
 
 interface Props {
   pages: string[];
+  onUpdate: (index: number, content: string) => void;
 }
 
-export default function PagedMarkdown({ pages }: Props) {
-  const [markdownPages, setMarkdownPages] = useState(pages);
+export default function PagedMarkdown({ pages, onUpdate }: Props) {
   const [modalIndex, setModalIndex] = useState<number | null>(null);
   const [modalContent, setModalContent] = useState("");
 
@@ -26,26 +26,27 @@ export default function PagedMarkdown({ pages }: Props) {
     }
   };
 
-  const scrollWidth = markdownPages.length > 0 ? 800 : 0;
+  const scrollWidth = pages.length > 0 ? 800 : 0;
 
   const openModal = (index: number) => {
     setModalIndex(index);
-    setModalContent(markdownPages[index]);
+    setModalContent(pages[index]);
   };
 
   const saveModal = () => {
     if (modalIndex === null) return;
-    const updated = [...markdownPages];
-    updated[modalIndex] = modalContent;
-    setMarkdownPages(updated);
+    onUpdate(modalIndex, modalContent);
     setModalIndex(null);
   };
 
   return (
     <div className="paged-container">
-      {/* 본문 */}
+      <div className="scrollbar-top" ref={topScrollRef} onScroll={handleTopScroll}>
+        <div style={{ width: `${scrollWidth}px`, height: 1 }} />
+      </div>
+
       <div className="paged-markdown" ref={contentScrollRef} onScroll={handleScroll}>
-        {markdownPages.map((content, idx) => (
+        {pages.map((content, idx) => (
           <div id={`page-${idx}`} className="a4-page" key={idx}>
             <div className="page-toolbar">
               <span>Page {idx + 1}</span>
@@ -57,7 +58,6 @@ export default function PagedMarkdown({ pages }: Props) {
         ))}
       </div>
 
-      {/* 모달 */}
       {modalIndex !== null && (
         <div className="edit-modal-backdrop">
           <div className="edit-modal">

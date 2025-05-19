@@ -73,3 +73,17 @@
     }
   }
   
+.export-button {
+  margin-right: 1rem;
+  padding: 0.4rem 1rem;
+  border: none;
+  background-color: #4a90e2;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:hover {
+    background-color: #357bd8;
+  }
+}
