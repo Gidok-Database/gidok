@@ -268,3 +268,67 @@
     }
   }
 }
+
+// 세팅
+.settings-panel {
+  position: absolute;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background-color: #f9f9f9;
+  border-left: 1px solid #ddd;
+  padding: 1.5rem 1rem;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+  z-index: 100;
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+
+  &.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #24292f;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.5rem;
+  }
+
+  h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+
+      span {
+        font-size: 0.9rem;
+        color: #333;
+      }
+
+      select {
+        padding: 0.3rem 0.5rem;
+        font-size: 0.85rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: white;
+        color: #333;
+      }
+    }
+  }
+}

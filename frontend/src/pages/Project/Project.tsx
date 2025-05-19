@@ -15,6 +15,11 @@ interface CommitData {
   pageIndex: number;
 }
 
+interface MemberPermission {
+  userid: string;
+  role: 'admin' | 'viewer';
+}
+
 export default function Project() {
   const { name: projectName } = useParams();
   const navigate = useNavigate();
@@ -59,7 +64,13 @@ export default function Project() {
   ]);
 
   const [showHistory, setShowHistory] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [selectedPage, setSelectedPage] = useState(0);
+  const [members, setMembers] = useState<MemberPermission[]>([
+    { userid: 'kar7mp5', role: 'admin' },
+    { userid: 'user123', role: 'viewer' },
+  ]);
+
   const previewRef = useRef<HTMLDivElement>(null);
 
   const handlePageUpdate = (index: number, content: string) => {
@@ -70,8 +81,7 @@ export default function Project() {
 
   const handleAddPage = () => {
     setMarkdownPages((prev) => [...prev, "# 새 페이지\n\n내용을 입력하세요."]);
-    setSelectedPage(markdownPages.length); // 새 페이지 자동 선택
-
+    setSelectedPage(markdownPages.length);
     setTimeout(() => {
       previewRef.current?.scrollTo({ top: previewRef.current.scrollHeight, behavior: "smooth" });
     }, 100);
@@ -101,6 +111,24 @@ export default function Project() {
     pdf.save("새 문서.pdf");
   };
 
+  const handleRoleChange = (userid: string, newRole: 'admin' | 'viewer') => {
+    setMembers((prev) => prev.map(m => m.userid === userid ? { ...m, role: newRole } : m));
+  };
+
+  const toggleSettings = () => {
+    setShowSettings((prev) => {
+      if (!prev && showHistory) setShowHistory(false);
+      return !prev;
+    });
+  };
+
+  const toggleHistory = () => {
+    setShowHistory((prev) => {
+      if (!prev && showSettings) setShowSettings(false);
+      return !prev;
+    });
+  };
+
   return (
     <div className="layout-container">
       <header className="top-nav">
@@ -117,10 +145,18 @@ export default function Project() {
           <span
             className="material-symbols-outlined"
             style={{ cursor: "pointer" }}
-            onClick={() => setShowHistory(!showHistory)}
+            onClick={toggleHistory}
             title="커밋 히스토리 보기"
           >
             timeline
+          </span>
+          <span
+            className="material-symbols-outlined"
+            style={{ cursor: "pointer" }}
+            onClick={toggleSettings}
+            title="설정 열기"
+          >
+            settings
           </span>
         </div>
       </header>
@@ -134,6 +170,25 @@ export default function Project() {
             </div>
           </div>
         </main>
+
+        <aside className={`settings-panel ${showSettings ? "show" : ""}`}>
+          <h3>프로젝트 설정</h3>
+          <h4>유저 권한 관리</h4>
+          <ul>
+            {members.map((member) => (
+              <li key={member.userid}>
+                <span>{member.userid}</span>
+                <select
+                  value={member.role}
+                  onChange={(e) => handleRoleChange(member.userid, e.target.value as 'admin' | 'viewer')}
+                >
+                  <option value="admin">관리자</option>
+                  <option value="viewer">일반 사용자</option>
+                </select>
+              </li>
+            ))}
+          </ul>
+        </aside>
 
         <div className="history-panel-wrapper">
           <aside className={`history-panel ${showHistory ? "show" : ""}`}>
