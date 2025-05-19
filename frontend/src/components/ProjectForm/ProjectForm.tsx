@@ -35,7 +35,7 @@ export default function ProjectForm({ onAdd }: ProjectFormProps) {
     <form className="add-repo-form" onSubmit={handleSubmit}>
       <input
         type="text"
-        placeholder="Repository Name"
+        placeholder="프로젝트 이름"
         value={name}
         onChange={(e) => setName(e.target.value)}
         required

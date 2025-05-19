@@ -83,11 +83,24 @@
     margin-bottom: 1rem;
   }
 
-  textarea {
-    min-height: 400px;
+  .commit-message-input {
+    margin-bottom: 1rem;
+    height: 60px;
+    width: 92%;
+    resize: vertical;
+    font-size: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  .content-editor {
+    min-height: 300px;
+    width: 90%;
+    resize: vertical;
     font-size: 1rem;
     padding: 1rem;
-    resize: vertical;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-family: inherit;

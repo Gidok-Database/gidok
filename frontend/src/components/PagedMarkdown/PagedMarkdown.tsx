@@ -4,12 +4,13 @@ import "@/components/PagedMarkdown/PagedMarkdown.css";
 
 interface Props {
   pages: string[];
-  onUpdate: (index: number, content: string) => void;
+  onUpdate: (index: number, content: string, message: string) => void;
 }
 
 export default function PagedMarkdown({ pages, onUpdate }: Props) {
   const [modalIndex, setModalIndex] = useState<number | null>(null);
   const [modalContent, setModalContent] = useState("");
+  const [commitMessage, setCommitMessage] = useState("");
 
   const topScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -31,11 +32,21 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
   const openModal = (index: number) => {
     setModalIndex(index);
     setModalContent(pages[index]);
+    setCommitMessage(""); // 커밋 메시지는 초기화
   };
 
   const saveModal = () => {
     if (modalIndex === null) return;
-    onUpdate(modalIndex, modalContent);
+
+    if (!commitMessage.trim()) {
+      alert("커밋 메시지를 입력해주세요.");
+      return;
+    }
+
+    const confirmed = window.confirm("정말로 저장하시겠습니까?");
+    if (!confirmed) return;
+
+    onUpdate(modalIndex, modalContent, commitMessage);
     setModalIndex(null);
   };
 
@@ -61,9 +72,19 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
         <div className="edit-modal-backdrop">
           <div className="edit-modal">
             <h3>Page {modalIndex + 1} 수정</h3>
+            {/* 🔼 커밋 메시지를 먼저 입력 */}
             <textarea
+              className="commit-message-input"
+              value={commitMessage}
+              onChange={(e) => setCommitMessage(e.target.value)}
+              placeholder="커밋 메시지를 입력하세요"
+            />
+            {/* 🔽 문서 본문 수정 */}
+            <textarea
+              className="content-editor"
               value={modalContent}
               onChange={(e) => setModalContent(e.target.value)}
+              placeholder="수정할 내용을 입력하세요"
             />
             <div className="modal-actions">
               <button onClick={saveModal}>저장</button>
