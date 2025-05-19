@@ -1,27 +1,55 @@
 import { useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import PagedMarkdown from "@/components/PagedMarkdown/PagedMarkdown";
 import "@/pages/Project/Project.css";
 
+interface CommitData {
+  id: string;
+  message: string;
+  author: string;
+  date: string;
+  parents: string[];
+}
+
 export default function Project() {
   const { name: projectName } = useParams();
+  const navigate = useNavigate();
+
   const [markdownPages, setMarkdownPages] = useState([
-    `# 📝 프로젝트 개요\n\n- 이 시스템은 마크다운 문서를 렌더링합니다.\n- 페이지 단위로 나뉩니다.`,
+    `# 📝 프로젝트 개요\n\n- 이 시스템은 마크다운 문서를 렌더링합니다.`,
     `## ⏱ 개발 일정\n\n1. 구조 설계\n2. 커밋 기능\n3. 렌더링\n4. 배포`,
     `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
   ]);
 
-  const previewRef = useRef<HTMLDivElement>(null);
+  const [commits] = useState<CommitData[]>([
+    {
+      id: "a1b2c3d",
+      message: "Initial commit",
+      author: "MinSup Kim",
+      date: "2024-05-17 14:32",
+      parents: [],
+    },
+    {
+      id: "d4e5f6g",
+      message: "Add README",
+      author: "MinSup Kim",
+      date: "2024-05-18 09:10",
+      parents: ["a1b2c3d"],
+    },
+    {
+      id: "h7i8j9k",
+      message: "Refactor layout",
+      author: "Kar7mp5",
+      date: "2024-05-19 12:50",
+      parents: ["d4e5f6g"],
+    },
+  ]);
 
   const [showHistory, setShowHistory] = useState(false);
-  const [commits] = useState([
-    { message: "Initial commit", time: "2시간 전" },
-    { message: "Added project overview", time: "1시간 전" },
-    { message: "Refactored markdown layout", time: "30분 전" },
-  ]);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const handlePageUpdate = (index: number, content: string) => {
     const updated = [...markdownPages];
@@ -67,6 +95,7 @@ export default function Project() {
             className="material-symbols-outlined"
             style={{ cursor: "pointer" }}
             onClick={() => setShowHistory(!showHistory)}
+            title="커밋 히스토리 보기"
           >
             notifications
           </span>
@@ -75,19 +104,32 @@ export default function Project() {
 
       <div className="body-container">
         <Sidebar pages={markdownPages} />
+
         <main className="main-content preview-mode">
           <div className="document-preview" ref={previewRef}>
             <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} />
           </div>
         </main>
+
         {showHistory && (
           <aside className="history-panel">
             <h3>커밋 히스토리</h3>
-            <ul className="history-list">
+            <ul className="git-graph-list">
               {commits.map((commit, i) => (
-                <li key={i}>
-                  <div className="commit-message">{commit.message}</div>
-                  <div className="commit-time">{commit.time}</div>
+                <li className="graph-item" key={commit.id} onClick={() =>
+                  navigate(`/project/${projectName}/commit/${commit.id}`)
+                }>
+                  <div className="graph-line">
+                    <div className="circle" />
+                    {i !== commits.length - 1 && <div className="vertical-line" />}
+                  </div>
+                  <div className="commit-info">
+                    <div className="commit-message">{commit.message}</div>
+                    <div className="commit-meta">
+                      <span>{commit.author}</span> · <span>{commit.date}</span>
+                    </div>
+                    <div className="commit-hash">#{commit.id.slice(0, 7)}</div>
+                  </div>
                 </li>
               ))}
             </ul>
