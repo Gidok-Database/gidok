@@ -20,9 +20,7 @@ export default function Project() {
   const navigate = useNavigate();
 
   const [markdownPages, setMarkdownPages] = useState([
-    `# 📝 프로젝트 개요\n\n- 이 시스템은 마크다운 문서를 렌더링합니다.`,
-    `## ⏱ 개발 일정\n\n1. 구조 설계\n2. 커밋 기능\n3. 렌더링\n4. 배포`,
-    `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
+    `# 새 페이지\n\n 내용을 작성해주세요.`,
   ]);
 
   const [commits] = useState<CommitData[]>([
@@ -68,6 +66,15 @@ export default function Project() {
     const updated = [...markdownPages];
     updated[index] = content;
     setMarkdownPages(updated);
+  };
+
+  const handleAddPage = () => {
+    setMarkdownPages((prev) => [...prev, "# 새 페이지\n\n내용을 입력하세요."]);
+    setSelectedPage(markdownPages.length); // 새 페이지 자동 선택
+
+    setTimeout(() => {
+      previewRef.current?.scrollTo({ top: previewRef.current.scrollHeight, behavior: "smooth" });
+    }, 100);
   };
 
   const handleExportPdf = async () => {
@@ -122,6 +129,9 @@ export default function Project() {
         <main className="main-content preview-mode">
           <div className="document-preview" ref={previewRef}>
             <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} />
+            <div className="add-page-button" onClick={handleAddPage}>
+              <span className="material-symbols-outlined">add_circle</span>
+            </div>
           </div>
         </main>
 

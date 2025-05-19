@@ -113,6 +113,25 @@
   background-color: #357bd8;
 }
 
+/* ✅ 페이지 추가 버튼 */
+.add-page-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1.5rem;
+  cursor: pointer;
+  color: #4a90e2;
+  transition: transform 0.2s;
+}
+.add-page-button .material-symbols-outlined {
+  font-size: 2.8rem;
+  transition: transform 0.2s ease;
+}
+.add-page-button:hover .material-symbols-outlined {
+  transform: scale(1.2);
+  color: #2b68c4;
+}
+
 /* ✅ 히스토리 패널 */
 .history-panel-wrapper {
   position: relative;
