@@ -162,6 +162,27 @@
     padding-bottom: 0.5rem;
   }
 
+  .page-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+    label {
+      font-size: 0.85rem;
+      color: #333;
+    }
+
+    select {
+      padding: 0.3rem 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background-color: white;
+      color: #333;
+    }
+  }
+
   .git-graph-list {
     list-style: none;
     padding: 0;

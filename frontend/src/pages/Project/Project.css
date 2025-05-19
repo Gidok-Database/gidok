@@ -146,6 +146,24 @@
   border-bottom: 1px solid #ddd;
   padding-bottom: 0.5rem;
 }
+.history-panel .page-select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.history-panel .page-select-wrapper label {
+  font-size: 0.85rem;
+  color: #333;
+}
+.history-panel .page-select-wrapper select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background-color: white;
+  color: #333;
+}
 .history-panel .git-graph-list {
   list-style: none;
   padding: 0;
