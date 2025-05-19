@@ -24,7 +24,7 @@ async def login(
         access_token = jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
         response.set_cookie(
-            key="session",
+            key="token",
             value= access_token,
             httponly=True,
             secure=True,
