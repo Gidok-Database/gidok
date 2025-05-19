@@ -1,79 +1,83 @@
-.layout-container {
+.github-page {
   display: flex;
-  flex-direction: column;
-  height: 100vh;
   background-color: #fff;
+  color: #24292f;
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
 }
-
-.top-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 3.75rem;
-  padding: 0 1rem;
-  border-bottom: 1px solid #ccc;
+.github-page .profile-sidebar {
+  width: 260px;
+  padding: 2rem;
+  border-right: 1px solid #e1e4e8;
+  text-align: center;
 }
-.top-nav .avatar {
-  width: 2rem;
-  height: 2rem;
+.github-page .profile-sidebar .avatar {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  background-color: #5e5555;
-}
-.top-nav .nav-right {
-  display: flex;
-  gap: 1rem;
-}
-.top-nav .nav-right .icon, .top-nav .nav-right .profile {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background-color: #5e5555;
-}
-
-.body-container {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.main-content {
-  flex: 1;
-  padding: 1rem;
-  overflow-y: auto;
-  background-color: #fafafa;
-}
-.main-content .file-header {
-  display: flex;
-  gap: 1rem;
   margin-bottom: 1rem;
 }
-.main-content .file-header select {
-  padding: 0.25rem 0.5rem;
+.github-page .profile-sidebar .username {
+  font-size: 0.9rem;
+  color: #57606a;
+  margin-bottom: 0.5rem;
 }
-.main-content .file-box {
-  background-color: #fff;
-  border: 1px solid #ccc;
-}
-.main-content .file-box .file-title {
-  margin: 0;
-  padding: 0.5rem;
-  border-bottom: 1px solid #ccc;
-}
-.main-content .file-box .file-content {
-  margin: 2rem;
-  background-color: #fff;
-}
-
-.export-button {
-  margin-right: 1rem;
-  padding: 0.4rem 1rem;
-  border: none;
-  background-color: #4a90e2;
-  color: white;
-  border-radius: 4px;
-  cursor: pointer;
+.github-page .profile-sidebar .bio {
   font-size: 0.85rem;
+  color: #24292f;
+  margin: 0.5rem 0;
 }
-.export-button:hover {
-  background-color: #357bd8;
+.github-page .profile-sidebar .location,
+.github-page .profile-sidebar .follow {
+  font-size: 0.85rem;
+  color: #57606a;
+  margin-top: 0.25rem;
+}
+.github-page .repo-list-area {
+  flex: 1;
+  padding: 2rem;
+}
+.github-page .repo-list-area .repo-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+}
+.github-page .repo-list-area .repo-list {
+  list-style: none;
+  padding: 0;
+}
+.github-page .repo-list-area .repo-list .repo-item {
+  border-top: 1px solid #d8dee4;
+  padding: 1rem 0;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-top .repo-name {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid #d0d7de;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge.admin {
+  background-color: #e8f0fe;
+  color: #1c5ed6;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge.user {
+  background-color: #f6f8fa;
+  color: #57606a;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-meta {
+  font-size: 0.85rem;
+  color: #57606a;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-meta span {
+  margin-right: 1rem;
 }

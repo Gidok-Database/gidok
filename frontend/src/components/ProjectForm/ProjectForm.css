@@ -1,0 +1,31 @@
+.add-repo-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.add-repo-form input,
+.add-repo-form select {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.add-repo-form input {
+  flex: 1 1 200px;
+}
+.add-repo-form select {
+  flex: 1 1 150px;
+}
+.add-repo-form button {
+  padding: 0.5rem 1rem;
+  background-color: #2da44e;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.add-repo-form button:hover {
+  background-color: #218739;
+}
