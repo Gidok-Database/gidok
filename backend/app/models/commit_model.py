@@ -208,12 +208,12 @@ class Commit:
                 cur.execute(
                     """\
                         SELECT * FROM commits c
-                        WHERE mode = %s
+                        WHERE (c.mode = %s or c.mode = 'release')
                           and project_id = %s
                           and NOT EXISTS (
                                 SELECT 1 FROM commits child
                                 WHERE child.parent_id = c.id
-                                  and mode = %s
+                                  and (child.mode = %s or child.mode = 'release')
                             )
                         LIMIT 1
                     """,
