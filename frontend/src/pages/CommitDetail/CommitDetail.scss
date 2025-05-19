@@ -1,0 +1,124 @@
+.commit-detail-container {
+  padding: 2rem;
+  background: #ffffff;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  .back-button {
+    padding: 0.4rem 0.8rem;
+    border: 1px solid #ccc;
+    color: #ffffff;
+    background:#4a90e2;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #eeeeee;
+    }
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+
+    .commit-id {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: #777;
+    }
+  }
+}
+
+.commit-compare {
+  display: flex;
+  gap: 2rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+.commit-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  background: #fdfdfd;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-y: auto;
+
+  h3 {
+    margin-top: 0;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: #222;
+  }
+
+  .markdown-diff {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    word-break: break-word;
+
+    h1, h2, h3 {
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+
+    p {
+      margin: 0.5rem 0;
+    }
+
+    ul {
+      padding-left: 1.2rem;
+    }
+
+    code {
+      background-color: #eee;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  }
+}
+
+// 이전 문서 강조
+.old-content {
+  background-color: #fff8f8;
+
+  del,
+  .removed {
+    background-color: #ffecec;
+    color: #a94442;
+    text-decoration: line-through;
+  }
+}
+
+// 이후 문서 강조
+.new-content {
+  background-color: #f8fff8;
+
+  ins,
+  .added {
+    background-color: #eaffea;
+    color: #2e7d32;
+    text-decoration: none;
+  }
+}
+
+// 반응형 (선택)
+@media (max-width: 768px) {
+  .commit-compare {
+    flex-direction: column;
+  }
+}
