@@ -151,8 +151,8 @@ export default function Project() {
     <div className="layout-container">
       <header className="top-nav">
         <div className="nav-left">
-          <button onClick={() => navigate("/")} className="home-button">
-            ← 홈으로
+          <button onClick={() => navigate("/")} className="home-button" title="홈으로">
+            <span className="material-symbols-outlined">home</span>
           </button>
           <span className="project-title">{projectName}</span>
         </div>

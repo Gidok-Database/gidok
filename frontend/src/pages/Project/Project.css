@@ -28,6 +28,8 @@
   cursor: pointer;
   margin-right: 0.5rem;
   padding: 0;
+  display: flex; /* ✅ 추가 */
+  align-items: center; /* ✅ 추가 */
   transition: color 0.2s;
 }
 .top-nav .nav-left .home-button:hover {
