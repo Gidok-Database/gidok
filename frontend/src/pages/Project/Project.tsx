@@ -8,17 +8,20 @@ import "@/pages/Project/Project.css";
 
 export default function Project() {
   const { name: projectName } = useParams();
-
   const [markdownPages, setMarkdownPages] = useState([
     `# 📝 프로젝트 개요\n\n- 이 시스템은 마크다운 문서를 렌더링합니다.\n- 페이지 단위로 나뉩니다.`,
     `## ⏱ 개발 일정\n\n1. 구조 설계\n2. 커밋 기능\n3. 렌더링\n4. 배포`,
     `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
-    `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
-    `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
-    `## ⚙️ 기술 스택\n\n- React\n- TypeScript\n- FastAPI\n- PostgreSQL`,
   ]);
 
   const previewRef = useRef<HTMLDivElement>(null);
+
+  const [showHistory, setShowHistory] = useState(false);
+  const [commits] = useState([
+    { message: "Initial commit", time: "2시간 전" },
+    { message: "Added project overview", time: "1시간 전" },
+    { message: "Refactored markdown layout", time: "30분 전" },
+  ]);
 
   const handlePageUpdate = (index: number, content: string) => {
     const updated = [...markdownPages];
@@ -60,7 +63,13 @@ export default function Project() {
           <button onClick={handleExportPdf} className="export-button">
             PDF로 내보내기
           </button>
-          <span className="material-symbols-outlined">notifications</span>
+          <span
+            className="material-symbols-outlined"
+            style={{ cursor: "pointer" }}
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            notifications
+          </span>
         </div>
       </header>
 
@@ -71,6 +80,19 @@ export default function Project() {
             <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} />
           </div>
         </main>
+        {showHistory && (
+          <aside className="history-panel">
+            <h3>커밋 히스토리</h3>
+            <ul className="history-list">
+              {commits.map((commit, i) => (
+                <li key={i}>
+                  <div className="commit-message">{commit.message}</div>
+                  <div className="commit-time">{commit.time}</div>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
       </div>
     </div>
   );
