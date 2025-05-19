@@ -12,11 +12,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/get_token",
                                      auto_error=False)
 
 def get_current_user(
-        token_cookie: Optional[str] = Cookie(None),
+        session: Optional[str] = Cookie(None),
         token_oauth: Optional[str] = Depends(oauth2_scheme)
     ):
-    if token_cookie:
-        token = token_cookie
+    if session:
+        token = session
     elif token_oauth:
         token = token_oauth
     else:
