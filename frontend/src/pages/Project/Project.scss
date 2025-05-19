@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100vh;
   background-color: #fff;
+  overflow: hidden;
 }
 
 .top-nav {
@@ -271,7 +272,7 @@
 
 // 세팅
 .settings-panel {
-  position: absolute;
+  position: fixed;
   right: 0;
   width: 300px;
   height: 100%;
