@@ -1,0 +1,51 @@
+.repo-page {
+  padding: 2rem;
+  background-color: #0d1117;
+  color: #c9d1d9;
+  min-height: 100vh;
+  font-family: system-ui, sans-serif;
+}
+.repo-page .title {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+.repo-page .repo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.repo-page .repo-list .repo-item {
+  border-top: 1px solid #30363d;
+  padding: 1rem 0;
+}
+.repo-page .repo-list .repo-item .repo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+.repo-page .repo-list .repo-item .repo-header .repo-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #58a6ff;
+  text-decoration: none;
+}
+.repo-page .repo-list .repo-item .repo-header .repo-name:hover {
+  text-decoration: underline;
+}
+.repo-page .repo-list .repo-item .repo-header .badge {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  background-color: #30363d;
+  border-radius: 2rem;
+  color: #8b949e;
+  border: 1px solid #8b949e;
+}
+.repo-page .repo-list .repo-item .repo-meta {
+  font-size: 0.85rem;
+  color: #8b949e;
+}
+.repo-page .repo-list .repo-item .repo-meta span {
+  margin-right: 0.75rem;
+}

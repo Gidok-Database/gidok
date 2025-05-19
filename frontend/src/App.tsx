@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom';
 
 import Home from '@/pages/Home/Home';
+import Lobby from '@/pages/Lobby/Lobby';
 import Login from '@/pages/Login/Login';
 import Register from '@/pages/Register/Register';
 import '@/App.css';
@@ -16,6 +17,7 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/lobby" element={<Lobby />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
       </Routes>
