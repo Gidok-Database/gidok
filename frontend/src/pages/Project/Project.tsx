@@ -85,6 +85,7 @@
       <div className="layout-container">
         <header className="top-nav">
           <div className="nav-left">
+            <button onClick={() => navigate(-1)} className="home-button">← 홈으로</button>
             <span className="project-title">{projectName}</span>
           </div>
           <div className="nav-right">

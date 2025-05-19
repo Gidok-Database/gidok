@@ -13,11 +13,32 @@
   padding: 0 1rem;
   border-bottom: 1px solid #ccc;
 
-  .project-title {
-    margin-left: 0.75rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #333;
+  .nav-left {
+    display: flex;
+    align-items: center;
+
+    .home-button {
+      background: none;
+      border: none;
+      color: #0366d6;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      padding: 0;
+      transition: color 0.2s;
+
+      &:hover {
+        text-decoration: underline;
+        color: #0046aa;
+      }
+    }
+
+    .project-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+    }
   }
 
   .avatar {
@@ -106,7 +127,7 @@
   }
 }
 
-/* ✅ 히스토리 패널 디자인 */
+/* ✅ 히스토리 패널 */
 .history-panel-wrapper {
   position: relative;
 }
@@ -123,163 +144,85 @@
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
   overflow-y: auto;
   z-index: 100;
-
-  // ✅ 슬라이드 기본 상태
   transform: translateX(100%);
   opacity: 0;
   transition: transform 0.4s ease, opacity 0.3s ease;
-}
 
-// ✅ 활성화 시 슬라이드 인
-.history-panel.show {
-  transform: translateX(0);
-  opacity: 1;
-}
+  &.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
 
-
-.history-panel h3 {
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  color: #24292f;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 0.5rem;
-}
-
-.history-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.history-list li {
-  padding: 0.8rem 0;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.commit-message {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #24292f;
-  word-break: break-word;
-}
-
-.commit-time {
-  font-size: 0.75rem;
-  color: #6a737d;
-}
-
-.history-panel {
-  width: 300px;
-  background-color: #f9f9f9;
-  border-left: 1px solid #ddd;
-  padding: 1.5rem 1rem;
-  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.05);
-  overflow-y: auto;
-}
-
-.history-panel h3 {
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  color: #24292f;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 0.5rem;
-}
-
-.git-graph-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.graph-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding-bottom: 1.5rem;
-}
-
-.graph-line {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 1.25rem;
-}
-
-.circle {
-  width: 0.75rem;
-  height: 0.75rem;
-  background-color: #4a90e2;
-  border-radius: 50%;
-  z-index: 1;
-}
-
-.vertical-line {
-  width: 2px;
-  flex: 1;
-  background-color: #ccc;
-  margin-top: 0.1rem;
-}
-
-.graph-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding-bottom: 1.5rem;
-  position: relative;
-}
-
-.graph-line {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 1.25rem;
-  position: relative;
-}
-
-.circle {
-  width: 0.75rem;
-  height: 0.75rem;
-  background-color: #4a90e2;
-  border-radius: 50%;
-  z-index: 1;
-  position: relative;
-}
-
-/* 노드 아래를 이어주는 선 */
-.graph-item:not(:last-child) .vertical-line {
-  position: absolute;
-  top: 0.75rem; // ⬅ circle 아래에서 시작
-  left: 0.6rem; // ⬅ circle 중앙 정렬
-  width: 2px;
-  height: calc(100% + 4rem); // ⬅ 다음 아이템까지 연결
-  background-color: #ccc;
-  z-index: 0;
-}
-
-.commit-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-
-  .commit-message {
-    font-size: 0.95rem;
-    font-weight: 500;
+  h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
     color: #24292f;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.5rem;
   }
 
-  .commit-meta {
-    font-size: 0.75rem;
-    color: #666;
+  .git-graph-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
   }
 
-  .commit-hash {
-    font-size: 0.75rem;
-    color: #999;
-    font-family: monospace;
+  .graph-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+    position: relative;
+
+    .graph-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 1.25rem;
+      position: relative;
+
+      .circle {
+        width: 0.75rem;
+        height: 0.75rem;
+        background-color: #4a90e2;
+        border-radius: 50%;
+        z-index: 1;
+        position: relative;
+      }
+
+      .vertical-line {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.6rem;
+        width: 2px;
+        height: calc(100% + 4rem);
+        background-color: #ccc;
+        z-index: 0;
+      }
+    }
+
+    .commit-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+
+      .commit-message {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #24292f;
+      }
+
+      .commit-meta {
+        font-size: 0.75rem;
+        color: #666;
+      }
+
+      .commit-hash {
+        font-size: 0.75rem;
+        color: #999;
+        font-family: monospace;
+      }
+    }
   }
 }
