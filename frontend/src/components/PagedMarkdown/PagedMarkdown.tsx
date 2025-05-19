@@ -43,11 +43,6 @@ export default function PagedMarkdown({ pages }: Props) {
 
   return (
     <div className="paged-container">
-      {/* 상단 스크롤바 */}
-      <div className="scrollbar-top" ref={topScrollRef} onScroll={handleTopScroll}>
-        <div style={{ width: `${scrollWidth}px`, height: 1 }} />
-      </div>
-
       {/* 본문 */}
       <div className="paged-markdown" ref={contentScrollRef} onScroll={handleScroll}>
         {markdownPages.map((content, idx) => (

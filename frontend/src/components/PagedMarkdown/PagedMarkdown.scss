@@ -5,29 +5,8 @@
   position: relative;
 }
 
-.scrollbar-top {
-  overflow-x: auto;
-  overflow-y: hidden;
-  height: 16px;
-  background-color: #f1f1f1;
-
-  & > div {
-    height: 1px;
-    margin-left: 2rem;
-  }
-
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #999;
-    border-radius: 4px;
-  }
-}
-
 .paged-markdown {
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 2rem;
   scroll-behavior: smooth;
