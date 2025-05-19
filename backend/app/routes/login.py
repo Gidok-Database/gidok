@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from jose import jwt
 from typing import Optional
 
+from middlewares.get_user import get_current_user
 from models.user_model import UserModel, UserService, TokenModel
 from config import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
 router = APIRouter()
@@ -142,3 +143,13 @@ def search_user(user_id: Optional[str] = None,
         )
     
     return users
+
+@router.get("/me")
+def validation_me(user: UserModel = Depends(get_current_user)):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
+    
+    return {"userid": user.userid, "name": user.name}
