@@ -1,3 +1,4 @@
+version: "3.9"
 
 services:
   postgres:
@@ -14,7 +15,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./sql:/docker-entrypoint-initdb.d:ro
     networks:
-      internal:
+      - internal
+
   backend:
     build: ./backend
     container_name: fastapi-backend
@@ -23,8 +25,27 @@ services:
     depends_on:
       - postgres
     networks:
-      internal:
+      - internal
+
+  frontend:
+    build: ./frontend
+    container_name: react-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://fastapi-backend:8000
+    command: yarn dev --host
+    depends_on:
+      - backend
+    networks:
+      - internal
+
 volumes:
   postgres_data:
+
 networks:
   internal:
+    driver: bridge
