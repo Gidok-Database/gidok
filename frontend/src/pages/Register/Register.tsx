@@ -31,7 +31,7 @@ export default function Register() {
     }
 
     try {
-      await axios.post("http://localhost:8000/signup", form);
+      await axios.post("http://localhost:8000/api/user/signup", form); // ✅ JSON 전송
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err: any) {
