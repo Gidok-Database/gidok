@@ -49,7 +49,6 @@ export default function PagedMarkdown({ pages, onUpdate }: Props) {
         {pages.map((content, idx) => (
           <div id={`page-${idx}`} className="a4-page" key={idx}>
             <div className="page-toolbar">
-              <span>Page {idx + 1}</span>
               <button onClick={() => openModal(idx)}>편집하기</button>
             </div>
             <ReactMarkdown>{content}</ReactMarkdown>

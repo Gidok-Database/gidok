@@ -1,21 +1,19 @@
 import { useState } from "react";
 import "@/components/ProjectForm/ProjectForm.css";
 
-interface AddRepositoryFormProps {
+interface ProjectFormProps {
   onAdd: (newRepo: {
     name: string;
     permission: "admin" | "user";
-    language: string;
-    license: string;
+    type: "docs" | "ppt";
     updated: string;
   }) => void;
 }
 
-export default function AddRepositoryForm({ onAdd }: AddRepositoryFormProps) {
+export default function ProjectForm({ onAdd }: ProjectFormProps) {
   const [name, setName] = useState("");
   const [permission, setPermission] = useState<"admin" | "user">("user");
-  const [language, setLanguage] = useState("");
-  const [license, setLicense] = useState("");
+  const [type, setType] = useState<"docs" | "ppt">("docs");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,15 +22,13 @@ export default function AddRepositoryForm({ onAdd }: AddRepositoryFormProps) {
     onAdd({
       name,
       permission,
-      language,
-      license,
+      type,
       updated: "Just now",
     });
 
     setName("");
-    setLanguage("");
-    setLicense("");
     setPermission("user");
+    setType("docs");
   };
 
   return (
@@ -48,18 +44,10 @@ export default function AddRepositoryForm({ onAdd }: AddRepositoryFormProps) {
         <option value="admin">관리자</option>
         <option value="user">일반 사용자</option>
       </select>
-      <input
-        type="text"
-        placeholder="Language"
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="License"
-        value={license}
-        onChange={(e) => setLicense(e.target.value)}
-      />
+      <select value={type} onChange={(e) => setType(e.target.value as "docs" | "ppt")}>
+        <option value="docs">📄 문서</option>
+        <option value="ppt">📊 발표자료</option>
+      </select>
       <button type="submit">추가</button>
     </form>
   );
