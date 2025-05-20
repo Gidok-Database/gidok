@@ -45,6 +45,7 @@ async def logout(response: Response):
     response.delete_cookie(key="session", path="/")
     return {"msg": "로그아웃 완료"}
 
+# 백엔드 전용 코드
 @router.post("/get_token", response_model=TokenModel)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends()
