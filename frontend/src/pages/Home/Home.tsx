@@ -29,18 +29,18 @@ export default function Home() {
   // ✅ 로그인 검증 및 유저 정보 + 프로젝트 목록 불러오기
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/user", {
+      .get("http://localhost:8000/api/user/me", {
         params: { user_id: undefined, user_name: undefined, user_email: undefined },
         withCredentials: true,
       })
       .then((res) => {
-        const user = res.data[0];
+        const user = res.data;
         setUserInfo({
           name: user.name,
           userid: user.userid,
           email: user.email,
-          org: user.organization,
-          desc: user.description,
+          org: user.org,
+          desc: user.desc,
           avatarUrl: user.avatarUrl || userInfoDefault.avatarUrl,
         });
         return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}&role=admin`);
@@ -54,7 +54,7 @@ export default function Home() {
         }));
         setRepositories(fetchedRepos);
       })
-      .catch(() => {
+      .catch((err) => {
         alert("로그인이 필요합니다.");
         navigate("/login");
       })

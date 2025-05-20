@@ -158,4 +158,8 @@ def validation_me(user: UserModel = Depends(get_current_user)):
             detail="로그인이 필요합니다.",
         )
     
-    return {"userid": user.userid, "name": user.name}
+    return {"userid": user.userid, 
+            "name": user.name, 
+            "email": user.email, 
+            "org": user.org,
+            "desc": user.desc}
