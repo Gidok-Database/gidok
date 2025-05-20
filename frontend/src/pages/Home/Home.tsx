@@ -6,11 +6,7 @@ import "@/pages/Home/Home.css";
 
 const userInfoDefault = {
   name: "",
-  username: "",
-  bio: "",
-  location: "",
-  followers: 0,
-  following: 0,
+  userid: "",
   avatarUrl: "https://avatars.githubusercontent.com/u/00000000",
 };
 
@@ -26,11 +22,11 @@ export default function Home() {
         withCredentials: true,
       })
       .then((res) => {
-        setUserInfo((prev) => ({
-          ...prev,
+        setUserInfo({
           name: res.data.name,
-          username: res.data.userid,
-        }));
+          userid: res.data.userid,
+          avatarUrl: res.data.avatarUrl || "https://avatars.githubusercontent.com/u/00000000",
+        });
       })
       .catch(() => {
         alert("로그인이 필요합니다.");
@@ -85,12 +81,7 @@ export default function Home() {
       <aside className="profile-sidebar">
         <img src={userInfo.avatarUrl} alt="avatar" className="avatar" />
         <h2>{userInfo.name}</h2>
-        <p className="username">@{userInfo.username}</p>
-        <p className="bio">{userInfo.bio}</p>
-        <p className="location">📍 {userInfo.location}</p>
-        <p className="follow">
-          👥 {userInfo.followers} followers · {userInfo.following} following
-        </p>
+        <p className="username">@{userInfo.userid}</p>
         {/* ✅ 로그아웃 버튼 */}
         <button onClick={handleLogout} className="logout-button">
           로그아웃

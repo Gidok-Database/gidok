@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Sidebar from "@/components/Sidebar/Sidebar";
@@ -23,6 +24,19 @@ interface MemberPermission {
 export default function Project() {
   const { name: projectName } = useParams();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/user/me", {
+        withCredentials: true,
+      })
+      .catch(() => {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
 
   const [markdownPages, setMarkdownPages] = useState([
     `# 새 페이지\n\n 내용을 작성해주세요.`,
@@ -146,6 +160,8 @@ export default function Project() {
       return !prev;
     });
   };
+
+  if (loading) return null;
 
   return (
     <div className="layout-container">

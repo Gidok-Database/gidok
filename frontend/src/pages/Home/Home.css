@@ -33,6 +33,19 @@
   color: #57606a;
   margin-top: 0.25rem;
 }
+.github-page .profile-sidebar .logout-button {
+  margin-top: 1rem;
+  padding: 0.4rem 1rem;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.github-page .profile-sidebar .logout-button:hover {
+  background-color: #c0392b;
+}
 .github-page .repo-list-area {
   flex: 1;
   padding: 2rem;
