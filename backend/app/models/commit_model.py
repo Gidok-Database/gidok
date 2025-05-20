@@ -77,7 +77,8 @@ class Commit:
                 self.parent_id = None
                 self.max_page = 1,
                 parent_max_page = None
-            elif parent["max_page_number"] + 1 >= self.page and self.page > 0:
+            elif (parent and parent["max_page_number"] + 1 >= self.page 
+                  and self.page > 0):
                 self.parent_id = parent["id"]
                 self.max_page = max(parent["max_page_number"], self.page)
                 parent_max_page = parent["max_page_number"]
@@ -236,6 +237,12 @@ class Commit:
                 return None
             
             return from_row(commit_data, cur)
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             if should_close:
                 conn.close()

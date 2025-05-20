@@ -92,7 +92,7 @@ class UserService:
             conn.close()
         if not user:
             return None
-        print("test")
+        
         user_model = UserModel(
             name = user["name"],
             userid = user["userid"],
@@ -117,6 +117,9 @@ class UserService:
         user_model = UserModel(
             name = user["name"],
             userid = user["userid"],
+            email = user['email'],
+            org = user["organization"],
+            desc = user["description"],
             password = ""
         )
         user_model._id = id

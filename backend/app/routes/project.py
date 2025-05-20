@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from typing import Optional
 
@@ -12,29 +12,30 @@ router = APIRouter()
 @router.post("/")
 async def create(project_form: ProjectModel, 
                  user: UserModel = Depends(get_current_user)):
-    if user == None:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "로그인이 필요합니다."}
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
+
+    if not project_form.name or project_form.name.strip() == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="프로젝트 이름(name)은 필수 항목입니다."
         )
 
     project = ProjectService.create_project(project_form.name,
                                             project_form.org,
                                             project_form.desc)
     if not project:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "프로젝트 생성 실패"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="프로젝트 생성에 실패 했습니다. 입력 값을 확인해 주세요."
         )
     
-    if not project.add_admin(user._id):
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "관리자 권한 할당 실패"}
-        )
-
+    project.add_admin(user._id)
     
-    return {"msg": "프로젝트 생성 성공", 
+    return {"detail": "프로젝트 생성을 성공했습니다.", 
             "project_id": project.project._id}
 
 @router.get("/search")
@@ -61,16 +62,20 @@ async def view(project_id: int, page: int, mode: Optional[str] = None,
          hash: Optional[str] = None,
          user: UserModel = Depends(get_current_user)):
     if user == None:
-        return JSONResponse(
-            status_code=400,
-            content={"msg": "로그인이 필요합니다."}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
         )
+    
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(user)
     
     if auth_level >= 3 \
        or (auth_level == 2 and mode != "release"):
-        return {"msg": "페이지가 없거나 권한이 없음"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="프로젝트를 읽을 권한이 없습니다.",
+        )
     
     
     if hash:

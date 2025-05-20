@@ -1,7 +1,8 @@
 from pydantic import BaseModel, PrivateAttr
-from typing import Optional, TYPE_CHECKING
-
+from typing import Optional
+from fastapi import HTTPException, status
 from models.commit_model import Commit
+from psycopg2.errors import UniqueViolation
 from psycopg2.extensions import cursor
 from models.user_model import UserModel
 from db import get_connection
@@ -34,8 +35,12 @@ class ProjectService:
             )
             project_id = cur.fetchone()[0]
             conn.commit()
-        except:
-            return None
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 오류"
+            )
         finally:
             conn.close()
         project_model = ProjectModel(name=name, org=org, desc=desc)
@@ -55,12 +60,20 @@ class ProjectService:
                 (self.project._id, user_id)
             )
             conn.commit()
-        except:
-            return False
+        except UniqueViolation:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="이미 관리자 권한이 존재합니다."
+            )
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 오류"
+            )
         finally:
             conn.close()
         
-        return True
     
     def add_user_role(self, user: UserModel, role: str):
         conn = get_connection()
@@ -198,28 +211,19 @@ class ProjectService:
                 if commit == None:
                     return ""
 
-            if commit == None \
-                or commit.max_page < page\
+            if (commit == None 
+                or commit.max_page < page
                 or (
-                    user != None
+                    user
                     and commit.status == "normal"
                     and commit.user != user
-                ):
-                return None
+                )):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="페이지를 갖고 오는데 실패 했습니다.",
+                )
 
-            cur.execute(
-                """\
-                    SELECT content FROM pages
-                    WHERE project_id = %s
-                      and page_number = %s
-                      and commit_id = %s
-                """,
-                (self.project._id, page, commit._id)
-            )
-            content = cur.fetchone()
-            if content:
-                return content[0]
-            elif commit.mode == 'local' and commit.page != page:
+            if commit.mode == 'local' and commit.page != page:
                 cur.execute(
                     """\
                         SELECT content FROM pages
@@ -230,10 +234,19 @@ class ProjectService:
                     (self.project._id, page, commit.parent_id)
                 )
                 content = cur.fetchone()
-                if content:
-                    return content[0]
-                else:
-                    return None
+            else:
+                cur.execute(
+                    """\
+                        SELECT content FROM pages
+                        WHERE project_id = %s
+                        and page_number = %s
+                        and commit_id = %s
+                    """,
+                    (self.project._id, page, commit._id)
+                )
+                content = cur.fetchone()
+            if content:
+                return content[0]
 
             cur.execute(
                 """\
@@ -261,18 +274,20 @@ class ProjectService:
             rows = cur.fetchall()
             if not rows:
                 return None
-            cur.execute(
-                """\
-                    SELECT content FROM pages
-                    WHERE commit_id = %s
-                """,
-                (rows[0]["parent_id"],)
-            )
-            content = cur.fetchone()
-            if not content:
-                return None
-            content_blocks = content[0].split('\n')
-            
+            if rows[0]["parent_id"]:
+                cur.execute(
+                    """\
+                        SELECT content FROM pages
+                        WHERE commit_id = %s
+                    """,
+                    (rows[0]["parent_id"],)
+                )
+                content = cur.fetchone()
+
+                content_blocks = content[0].split('\n')
+            else:
+                content_blocks = [""]
+
             for row in rows:
                 cur.execute(
                     """\
@@ -304,6 +319,14 @@ class ProjectService:
                 (self.project._id, content, page, commit._id)
             )
             conn.commit()
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             if cursor == None:
                 conn.close()
@@ -320,6 +343,7 @@ class ProjectService:
                 parent_page = self.get_page(commit=parent, 
                                             page=commit.page, 
                                             cursor=cursor)
+                
                 parent_blocks = parent_page.split("\n")
                 blocks = parent_blocks[:commit.old_start]+\
                         commit.blocks+\
