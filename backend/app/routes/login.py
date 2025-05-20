@@ -39,7 +39,12 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="아이디 또는 비밀번호가 일치하지 않습니다",
         )
-    
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(key="session", path="/")
+    return {"msg": "로그아웃 완료"}
+
 @router.post("/get_token", response_model=TokenModel)
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends()

@@ -1,19 +1,58 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import ProjectForm from "@/components/ProjectForm/ProjectForm";
 import "@/pages/Home/Home.css";
 
-const userInfo = {
-  name: "MinSup Kim",
-  username: "kar7mp5",
-  bio: "Computer Science Engineering, Inha University sophomore",
-  location: "South Korea",
-  followers: 34,
-  following: 55,
+const userInfoDefault = {
+  name: "",
+  username: "",
+  bio: "",
+  location: "",
+  followers: 0,
+  following: 0,
   avatarUrl: "https://avatars.githubusercontent.com/u/00000000",
 };
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState(userInfoDefault);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ 로그인 검증
+  useEffect(() => {
+    axios
+      .get("http://localhost:8000/api/user/me", {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setUserInfo((prev) => ({
+          ...prev,
+          name: res.data.name,
+          username: res.data.userid,
+        }));
+      })
+      .catch(() => {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+      })
+      .finally(() => setLoading(false));
+  }, [navigate]);
+
+  // ✅ 로그아웃 함수
+  const handleLogout = async () => {
+    try {
+      await axios.post("http://localhost:8000/api/user/logout", {}, {
+        withCredentials: true,
+      });
+      alert("로그아웃 되었습니다.");
+      navigate("/login");
+    } catch (error) {
+      console.error("로그아웃 실패:", error);
+      alert("로그아웃 실패");
+    }
+  };
+
   const [repositories, setRepositories] = useState([
     {
       name: "Database_Team_Project",
@@ -39,6 +78,8 @@ export default function Home() {
     setRepositories((prev) => [newRepo, ...prev]);
   };
 
+  if (loading) return null;
+
   return (
     <div className="github-page">
       <aside className="profile-sidebar">
@@ -50,6 +91,10 @@ export default function Home() {
         <p className="follow">
           👥 {userInfo.followers} followers · {userInfo.following} following
         </p>
+        {/* ✅ 로그아웃 버튼 */}
+        <button onClick={handleLogout} className="logout-button">
+          로그아웃
+        </button>
       </aside>
 
       <main className="repo-list-area">
