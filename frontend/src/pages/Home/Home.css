@@ -71,6 +71,8 @@
 }
 .github-page .repo-list-area .repo-list .repo-item .repo-top .repo-name-link {
   font-weight: 700;
+  text-decoration: none;
+  color: #000;
 }
 .github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge {
   font-size: 0.75rem;
