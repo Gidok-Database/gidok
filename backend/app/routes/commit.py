@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from datetime import date
 from typing import Optional
 
@@ -14,21 +14,28 @@ router = APIRouter()
 def create_commit(project_id: int, commit_form: CommitCreateForm,
                   user: UserModel = Depends(get_current_user)):
     if user == None:
-        return {"msg":"error"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
     project = ProjectService.get_project(project_id)
 
     if project.get_user_auth_level(user) >= 2:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="커밋을 만들 권한이 없습니다.",
+        )
     if commit_form.page <= 0:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="페이지 값은 1 이상이어야 합니다.",
+        )
 
     commit = Commit(commit_form, project, user)
     hash = commit.create_commit()
-    if not hash:
-        return {"msg": "error"}
         
     return {
-        "msg": "success",
+        "detail": "커밋을 성공적으로 생성했습니다.",
         "hash": hash
     }
 

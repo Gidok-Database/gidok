@@ -1,6 +1,7 @@
 import hashlib
 from datetime import datetime, timezone, date
 
+from fastapi import HTTPException, status
 from psycopg2.extensions import cursor
 from pydantic import BaseModel
 from typing import Optional, TYPE_CHECKING
@@ -81,7 +82,10 @@ class Commit:
                 self.max_page = max(parent["max_page_number"], self.page)
                 parent_max_page = parent["max_page_number"]
             else:
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="페이지는 한 번에 하나씩만 추가할 수 있습니다.",
+                )
                 
             params = [self.hash,
                       self.project.project._id,
@@ -118,10 +122,16 @@ class Commit:
                 
             self.project.insert_page(self.page, self, parent_max_page,cur)
             conn.commit()
+        except HTTPException as e:
+            conn.rollback()
+            raise e
         except Exception as e:
             print(e)
             conn.rollback()
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
         return self.hash
