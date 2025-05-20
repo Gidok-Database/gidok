@@ -35,9 +35,10 @@ export default function Home() {
       })
       .then((res) => {
         const user = res.data;
+        console.log(user);
         setUserInfo({
-          name: user.name,
           userid: user.userid,
+          name: user.name,
           email: user.email,
           org: user.org,
           desc: user.desc,
