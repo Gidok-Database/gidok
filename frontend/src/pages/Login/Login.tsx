@@ -23,19 +23,17 @@ export default function Login() {
     data.append("username", form.username);
     data.append("password", form.password);
 
-    try {
-      const res = await axios.post("http://localhost:8000/api/user/login", data, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        withCredentials: true, // ✅ 세션 쿠키 저장
-      });
-
-      alert("로그인 성공");
+    axios.post("http://localhost:8000/api/user/login", data, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      withCredentials: true, // ✅ 세션 쿠키 저장
+    }).then((res)=> {
+      alert(res.data.msg);
       navigate("/");
-    } catch (err: any) {
+    }).catch((err) => {
       alert(err.response?.data?.detail || "로그인 실패");
-    }
+    });
   };
 
   return (

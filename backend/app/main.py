@@ -6,7 +6,7 @@ app = FastAPI(root_path="/api")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 또는 "*" 개발 중엔 허용
+    allow_origins=["http://localhost:5173"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
