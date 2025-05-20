@@ -74,8 +74,28 @@ export default function Home() {
     }
   };
 
-  const handleAddRepository = (newRepo: ProjectType) => {
-    setRepositories((prev) => [newRepo, ...prev]);
+  const handleAddRepository = async (formData: { name: string; org?: string; desc?: string }) => {
+    try {
+      // ✅ 백엔드에 프로젝트 생성 요청
+      const res = await axios.post("http://localhost:8000/api/project/", {
+        name: formData.name,
+        org: formData.org,
+        desc: formData.desc,
+      }, { withCredentials: true });
+
+      // ✅ 응답 성공 시 프론트 목록에 반영
+      const newRepo: ProjectType = {
+        name: formData.name,
+        permission: "admin", // 생성자는 무조건 admin
+        type: "docs",         // 기본값
+        updated: "방금 생성됨",
+      };
+
+      setRepositories((prev) => [newRepo, ...prev]);
+    } catch (err) {
+      console.error("프로젝트 생성 실패:", err);
+      alert("프로젝트 생성 실패");
+    }
   };
 
   if (loading) return null;
@@ -98,8 +118,8 @@ export default function Home() {
         <h1 className="repo-title">프로젝트</h1>
         <ProjectForm onAdd={handleAddRepository} />
         <ul className="repo-list">
-          {repositories.map((repo, i) => (
-            <li className="repo-item" key={i}>
+          {repositories.map((repo) => (
+            <li className="repo-item" key={repo.name}>
               <div className="repo-top">
                 <Link to={`/project/${repo.name}`} className="repo-name-link">
                   {repo.name}
