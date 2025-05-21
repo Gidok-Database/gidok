@@ -151,60 +151,95 @@ export default function Project() {
   /**
    * 정확한 수정 범위(old_start, old_end)를 계산한다.
    */
+/**
+ * 정확한 수정 범위(old_start, old_end)를 계산한다.
+ * - 추가/삭제/변경이 포함된 줄 범위를 모두 감지함
+ * - 아무 변화가 없으면 [0, 0] 반환
+ */
   const getLineRange = (oldText: string, newText: string): [number, number] => {
     const diffs = diffLines(oldText, newText);
-    let oldStart = -1;
-    let oldEnd = -1;
+
     let oldLineIndex = 0;
+    let start = -1;
+    let end = -1;
 
     for (const part of diffs) {
-      if (part.added) continue;
+      const count = part.count ?? 0;
 
-      if (part.removed) {
-        if (oldStart === -1) oldStart = oldLineIndex;
-        oldEnd = oldLineIndex + part.count!;
+      if (part.removed || part.added) {
+        if (start === -1) start = oldLineIndex;
+        end = oldLineIndex + count;
       }
 
-      if (!part.added && !part.removed) {
-        oldLineIndex += part.count!;
+      if (!part.added) {
+        oldLineIndex += count;
       }
     }
 
-    if (oldStart === -1) return [0, 0]; // 변경 없음
-    return [oldStart, oldEnd !== -1 ? oldEnd : oldStart];
-  }
+    if (start === -1) return [0, 0];
+    return [start, end];
+  };
 
-
-  const handlePageUpdate = async (index: number, content: string, title: string, desc: string) => {
+  const handlePageUpdate = async (
+    index: number,
+    newContent: string,
+    title: string,
+    desc: string
+  ) => {
     if (!projectId) return;
 
     const oldText = markdownPages[index];
-    const cleanedContent = content.trimEnd();
+    const cleanedContent = newContent; // .trimEnd();
     if (oldText === cleanedContent) return;
 
+    console.log(oldText);
+    console.log(cleanedContent);
     const [old_start, old_end] = getLineRange(oldText, cleanedContent);
 
-    console.log(cleanedContent);
+    console.log(old_start, old_end);
+    const newLines = cleanedContent.split("\n");
+
+    let docs: string;
+
+    if (old_start === old_end) {
+      // ✅ 삭제 없이 줄이 삽입된 경우: 해당 위치의 한 줄만 추출
+      docs = newLines[old_start] ?? "";
+    } else {
+      // ✅ 줄 삭제/변경/복합 변경의 경우: 범위 슬라이싱
+      const changedLines = newLines.slice(old_start, old_end);
+      docs = changedLines.join("\n");
+    }
 
     try {
-    const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
-      page: index + 1,
-      title,
-      desc,
-      docs: cleanedContent,
-      old_start,
-      old_end,
-    }, { withCredentials: true });
+      const commitRes = await axios.post(
+        `http://localhost:8000/api/commit/${projectId}`,
+        {
+          page: index + 1,
+          title,
+          desc,
+          docs,
+          old_start,
+          old_end,
+        },
+        { withCredentials: true }
+      );
 
       const hash = commitRes.data?.hash;
       if (hash) {
-        await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
-        await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
+        await axios.patch(
+          `http://localhost:8000/api/commit/${projectId}`,
+          { cmd: "push", hash },
+          { withCredentials: true }
+        );
+        await axios.patch(
+          `http://localhost:8000/api/commit/${projectId}`,
+          { cmd: "merge", hash },
+          { withCredentials: true }
+        );
 
         const updatedContent = await fetchProjectPage(projectId, index + 1);
         const updated = [...markdownPages];
         updated[index] = updatedContent;
-        console.log(updated);
         setMarkdownPages(updated);
       }
     } catch (err) {
