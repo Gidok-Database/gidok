@@ -4,6 +4,15 @@ import axios from "axios";
 import ProjectForm from "@/components/ProjectForm/ProjectForm";
 import "@/pages/Home/Home.css";
 
+interface ProjectType {
+  id: number;
+  name: string;
+  org?: string;
+  desc?: string;
+  type: "docs" | "ppt";
+  updated: string;
+}
+
 const userInfoDefault = {
   name: "",
   userid: "",
@@ -13,52 +22,41 @@ const userInfoDefault = {
   avatarUrl: "https://avatars.githubusercontent.com/u/00000000",
 };
 
-interface ProjectType {
-  name: string;
-  permission: "admin" | "user";
-  type: "docs" | "ppt";
-  updated: string;
-}
-
 export default function Home() {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(userInfoDefault);
   const [loading, setLoading] = useState(true);
   const [repositories, setRepositories] = useState<ProjectType[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  // ✅ 로그인 검증 및 유저 정보 + 프로젝트 목록 불러오기
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/api/user/me", {
-        params: { user_id: undefined, user_name: undefined, user_email: undefined },
-        withCredentials: true,
-      })
-      .then((res) => {
-        const user = res.data;
-        setUserInfo({
-          userid: user.userid,
-          name: user.name,
-          email: user.email,
-          org: user.org,
-          desc: user.desc,
-          avatarUrl: user.avatarUrl || userInfoDefault.avatarUrl,
-        });
-        return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}&role=admin`);
-      })
-      .then((res) => {
-        const fetchedRepos = res.data.map((proj: any) => ({
-          name: proj.name,
-          permission: "admin",
-          type: "docs",
-          updated: "알 수 없음",
-        }));
-        setRepositories(fetchedRepos);
-      })
-      .catch((err) => {
-        alert("로그인이 필요합니다.");
-        navigate("/login");
-      })
-      .finally(() => setLoading(false));
+    axios.get("http://localhost:8000/api/user/me", {
+      withCredentials: true,
+    }).then((res) => {
+      const user = res.data;
+      setUserInfo({
+        userid: user.userid,
+        name: user.name,
+        email: user.email,
+        org: user.org,
+        desc: user.desc,
+        avatarUrl: user.avatarUrl || userInfoDefault.avatarUrl,
+      });
+      return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}&role=admin`);
+    }).then((res) => {
+      const fetchedRepos = res.data.map((proj: any) => ({
+        id: proj.id,
+        name: proj.name,
+        org: proj.organization,
+        desc: proj.description,
+        type: "docs",
+        updated: "알 수 없음",
+      }));
+      setRepositories(fetchedRepos);
+    }).catch(() => {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+    }).finally(() => setLoading(false));
   }, [navigate]);
 
   const handleLogout = async () => {
@@ -69,55 +67,124 @@ export default function Home() {
       alert("로그아웃 되었습니다.");
       navigate("/login");
     } catch (error) {
-      console.error("로그아웃 실패:", error);
       alert("로그아웃 실패");
     }
   };
 
   const handleAddRepository = async (formData: { name: string; org?: string; desc?: string }) => {
     try {
-      // 1. 프로젝트 생성 요청
-      const res = await axios.post("http://localhost:8000/api/project/", {
-        name: formData.name,
-        org: formData.org,
-        desc: formData.desc,
-      }, { withCredentials: true });
-
+      // 1. 프로젝트 생성
+      const res = await axios.post("http://localhost:8000/api/project/", formData, {
+        withCredentials: true,
+      });
       const projectId = res.data?.project_id;
+
       if (!projectId) {
-        console.error("프로젝트 ID 누락:", res.data);
-        alert("프로젝트 생성에 실패했습니다.");
+        alert("프로젝트 생성 실패");
         return;
       }
 
-      // 2. 첫 커밋 요청 (commit API는 /api/commit/{project_id})
+      // 2. 초기 커밋 생성 (mode는 여전히 local로 생성됨)
       const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
-        page: 1, // ✅ FastAPI는 page <= 0일 때 에러
+        page: 1,
         docs: "# 새 문서 시작\n\n이곳에 내용을 작성하세요.",
-        title: "새 문서 시작",
-        desc: "프로젝트 생성 시 자동 커밋",
+        title: "초기 커밋",
+        desc: "자동 생성",
         old_start: 0,
-        old_end: 0
+        old_end: 0,
       }, { withCredentials: true });
 
-      if (commitRes.data?.msg !== "success") {
-        console.error("초기 커밋 실패:", commitRes.data);
-        alert("초기 커밋 생성에 실패했습니다.");
+      const hash = commitRes.data?.hash;
+      if (!hash) {
+        alert("초기 커밋 생성 실패");
         return;
       }
 
-      // 3. 프로젝트 목록에 추가
-      const newRepo: ProjectType = {
-        name: formData.name,
-        permission: "admin",
-        type: "docs",
-        updated: "방금 생성됨",
-      };
+      // 3. 커밋 develop 모드로 push
+      const pushRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+        cmd: "push",
+        hash: hash,
+      }, { withCredentials: true });
 
-      setRepositories((prev) => [newRepo, ...prev]);
+      // 3. 커밋 develop 모드로 merge
+      const mergeRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+        cmd: "merge",
+        hash: hash,
+      }, { withCredentials: true });
+
+      console.log(mergeRes.data);
+      console.log(pushRes.data);
+
+      if (pushRes.data?.msg !== "커밋을 성공적으로 푸쉬했습니다.") {
+        alert("커밋 develop 승격 실패: " + pushRes.data?.msg);
+        return;
+      }
+
+      // 4. UI에 반영
+      setRepositories((prev) => [
+        {
+          id: projectId,
+          name: formData.name,
+          org: formData.org,
+          desc: formData.desc,
+          type: "docs",
+          updated: "방금 생성됨",
+        },
+        ...prev,
+      ]);
     } catch (err) {
-      console.error("프로젝트 생성 또는 커밋 실패:", err);
-      alert("프로젝트 생성 또는 커밋 실패");
+      console.error("[ERROR] 프로젝트 생성 또는 커밋 오류:", err);
+      alert("프로젝트 생성 또는 초기 커밋 실패");
+    }
+  };
+
+  const handleDeleteRepository = async (projectId: number) => {
+    if (!window.confirm("정말로 삭제하시겠습니까?")) return;
+
+    try {
+      await axios.post("http://localhost:8000/api/project/delete", {
+        project_id: projectId
+      }, { withCredentials: true });
+
+      setRepositories((prev) => prev.filter((p) => p.id !== projectId));
+    } catch (err) {
+      alert("삭제 실패");
+    }
+  };
+
+  const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
+    try {
+      await axios.post(`http://localhost:8000/api/project/${projectId}/edit`, updatedData, {
+        withCredentials: true,
+      });
+
+      setRepositories((prev) =>
+        prev.map((p) =>
+          p.id === projectId ? { ...p, ...updatedData } : p
+        )
+      );
+    } catch (err) {
+      alert("수정 실패");
+    }
+  };
+
+  const handleSearch = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/project/search?title=${searchKeyword}`, {
+        withCredentials: true,
+      });
+
+      const filtered = res.data.map((proj: any) => ({
+        id: proj.id,
+        name: proj.name,
+        org: proj.organization,
+        desc: proj.description,
+        type: "docs",
+        updated: "검색 결과",
+      }));
+      setRepositories(filtered);
+    } catch (err) {
+      alert("검색 실패");
     }
   };
 
@@ -140,16 +207,23 @@ export default function Home() {
       <main className="repo-list-area">
         <h1 className="repo-title">프로젝트</h1>
         <ProjectForm onAdd={handleAddRepository} />
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="프로젝트 검색..."
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+          />
+          <button onClick={handleSearch}>검색</button>
+        </div>
         <ul className="repo-list">
           {repositories.map((repo) => (
-            <li className="repo-item" key={repo.name}>
+            <li className="repo-item" key={repo.id}>
               <div className="repo-top">
                 <Link to={`/project/${repo.name}`} className="repo-name-link">
                   {repo.name}
                 </Link>
-                <span className={`perm-badge ${repo.permission}`}>
-                  {repo.permission === "admin" ? "관리자" : "일반 사용자"}
-                </span>
+                <button onClick={() => handleDeleteRepository(repo.id)}>🗑</button>
               </div>
               <div className="repo-meta">
                 <span className="type-badge">
