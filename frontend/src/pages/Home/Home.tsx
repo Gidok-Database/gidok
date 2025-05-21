@@ -87,9 +87,9 @@ export default function Home() {
       // 2. 초기 커밋 생성 (mode는 여전히 local로 생성됨)
       const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
         page: 1,
-        docs: "# 새 페이지 \n\n내용을 작성해주세요.",
         title: "초기 커밋",
         desc: "자동 생성",
+        docs: "# 새 페이지 \n\n내용을 작성해주세요.",
         old_start: 0,
         old_end: 0,
       }, { withCredentials: true });

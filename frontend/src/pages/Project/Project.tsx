@@ -1,4 +1,4 @@
-// ✅ 전체 코드 (Project.tsx) - view 모드에서 page 단일 요청으로 동작하도록 수정
+// ✅ 전체 코드 (Project.tsx) - 권한(role) admin/member/viewer 적용
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -21,7 +21,7 @@ interface CommitData {
 
 interface MemberPermission {
   userid: string;
-  role: "admin" | "viewer";
+  role: "admin" | "member" | "viewer";
 }
 
 export default function Project() {
@@ -30,6 +30,7 @@ export default function Project() {
   const [loading, setLoading] = useState(true);
   const [projectId, setProjectId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string>("");
+  const [userRole, setUserRole] = useState<"admin" | "member" | "viewer">("viewer");
 
   const [markdownPages, setMarkdownPages] = useState<string[]>([]);
   const [commits, setCommits] = useState<CommitData[]>([]);
@@ -37,10 +38,7 @@ export default function Project() {
   const [showSettings, setShowSettings] = useState(false);
   const [selectedPage, setSelectedPage] = useState(0);
   const [members, setMembers] = useState<MemberPermission[]>([]);
-  const [pendingChange, setPendingChange] = useState<{
-    userid: string;
-    role: "admin" | "viewer";
-  } | null>(null);
+  const [pendingChange, setPendingChange] = useState<MemberPermission | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,6 +52,7 @@ export default function Project() {
         const project = res.data.find((p: any) => p.name === projectName);
         if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
         setProjectId(project.id);
+        setUserRole(project.role);
       })
       .catch(() => {
         alert("로그인이 필요합니다.");
@@ -64,49 +63,49 @@ export default function Project() {
 
   useEffect(() => {
     if (projectId !== null) {
-      fetchProjectPage(projectId, selectedPage + 1);
-      loadCommits(projectId, selectedPage);
+      fetchMaxPageFromCommits(projectId).then((maxPage) => {
+        fetchAllProjectPages(projectId, maxPage);
+        loadCommits(projectId, selectedPage);
+      });
     }
   }, [projectId, selectedPage]);
 
-  const fetchProjectPage = async (projId: number, page: number) => {
+  const fetchAllProjectPages = async (projId: number, maxPages: number) => {
+    const pages: string[] = [];
+    for (let i = 1; i <= maxPages; i++) {
+      try {
+        const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+          params: { mode: "develop", page: i },
+          withCredentials: true,
+        });
+        pages.push(res.data?.docs || `# Page ${i}\n\n(불러오기 실패)`);
+      } catch {
+        pages.push(`# Page ${i}\n\n(에러 발생)`);
+      }
+    }
+    setMarkdownPages(pages);
+  };
+
+  const fetchMaxPageFromCommits = async (projId: number): Promise<number> => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
-        params: {
-          mode: "develop",
-          page
-        },
+      const res = await axios.get(`http://localhost:8000/api/commit/${projId}/search`, {
+        params: { mode: "develop", start: 0, end: 50 },
         withCredentials: true,
       });
-
-      if (!res.data?.docs) {
-        console.error("[ERROR] 응답 형식 오류", res.data);
-        alert("페이지를 불러올 수 없습니다.");
-        return;
-      }
-
-      const updated = [...markdownPages];
-      updated[page - 1] = res.data.docs;
-      setMarkdownPages(updated);
-    } catch (err) {
-      console.error("[ERROR] 페이지 로딩 실패:", err);
-      alert("페이지 불러오기 실패");
+      return Math.max(...res.data.map((c: any) => c.max_page || 1));
+    } catch {
+      return 1;
     }
   };
 
   const loadCommits = (projId: number, pageIdx: number) => {
     axios
       .get(`http://localhost:8000/api/commit/${projId}/search`, {
-        params: {
-          mode: "develop",
-          start: 0,
-          end: 50,
-        },
+        params: { mode: "develop", start: 0, end: 50 },
         withCredentials: true,
       })
       .then((res) => {
         if (!Array.isArray(res.data)) return;
-
         const parsed: CommitData[] = res.data.map((c: any) => ({
           id: c.hash,
           message: c.title || "(제목 없음)",
@@ -116,15 +115,16 @@ export default function Project() {
           pageIndex: (c.max_page || 1) - 1,
           desc: c.desc || "",
         }));
-
         setCommits(parsed.filter((c) => c.pageIndex === pageIdx));
 
         const usersMap: Record<string, MemberPermission> = {};
         res.data.forEach((c: any) => {
           if (c.user_id) {
-            usersMap[c.user_id] = { userid: c.user_id, role: "viewer" };
+            const role: MemberPermission["role"] = c.role || "viewer";
+            usersMap[c.user_id] = { userid: c.user_id, role };
           }
         });
+        console.log(usersMap);
         setMembers(Object.values(usersMap));
       });
   };
@@ -137,32 +137,24 @@ export default function Project() {
 
   const handleAddPage = async () => {
     if (!projectId) return;
-
     const pageNumber = markdownPages.length + 1;
     const docs = `# 새 페이지\n\n내용을 입력하세요.`;
-
     try {
-      const res = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
-        title: "새 페이지",
-        desc: docs,
-        docs,
+      const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
         page: pageNumber,
+        title: "초기 커밋",
+        desc: `${pageNumber} 페이지 추가`,
+        docs,
         old_start: 0,
         old_end: 0,
       }, { withCredentials: true });
-
-      const hash = res.data?.hash;
+      const hash = commitRes.data?.hash;
       if (!hash) throw new Error("커밋 실패");
-
-      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
-        cmd: "push",
-        hash,
-      }, { withCredentials: true });
-
-      setMarkdownPages((prev) => [...prev, docs]);
+      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
+      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
+      await fetchAllProjectPages(projectId, pageNumber);
       setSelectedPage(pageNumber - 1);
-    } catch (err) {
-      console.error("[ERROR] 추가 실패:", err);
+    } catch {
       alert("페이지 추가 실패");
     }
   };
@@ -175,10 +167,8 @@ export default function Project() {
   const handleExportPdf = async () => {
     const container = previewRef.current;
     if (!container) return;
-
     const pdf = new jsPDF("p", "pt", "a4");
     const pageEls = container.querySelectorAll(".a4-page");
-
     for (let i = 0; i < pageEls.length; i++) {
       const el = pageEls[i] as HTMLElement;
       const canvas = await html2canvas(el, { scale: 2, useCORS: true });
@@ -188,33 +178,20 @@ export default function Project() {
       if (i > 0) pdf.addPage();
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
     }
-
     pdf.save("새 문서.pdf");
   };
 
   const confirmRoleChange = () => {
     if (pendingChange) {
       const { userid, role } = pendingChange;
-      setMembers((prev) =>
-        prev.map((m) => (m.userid === userid ? { ...m, role } : m))
-      );
+      setMembers((prev) => prev.map((m) => (m.userid === userid ? { ...m, role } : m)));
       setPendingChange(null);
     }
   };
 
   const cancelRoleChange = () => setPendingChange(null);
-  const toggleSettings = () => {
-    setShowSettings((prev) => {
-      if (!prev && showHistory) setShowHistory(false);
-      return !prev;
-    });
-  };
-  const toggleHistory = () => {
-    setShowHistory((prev) => {
-      if (!prev && showSettings) setShowSettings(false);
-      return !prev;
-    });
-  };
+  const toggleSettings = () => setShowSettings((prev) => (!prev && showHistory ? (setShowHistory(false), true) : !prev));
+  const toggleHistory = () => setShowHistory((prev) => (!prev && showSettings ? (setShowSettings(false), true) : !prev));
 
   if (loading) return null;
 
@@ -237,11 +214,7 @@ export default function Project() {
         <Sidebar pages={markdownPages} />
         <main className="main-content preview-mode">
           <div className="document-preview" ref={previewRef}>
-            <PagedMarkdown
-              pages={markdownPages}
-              onUpdate={handlePageUpdate}
-              onDelete={handleDeletePage}
-            />
+            <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} onDelete={handleDeletePage} />
             <div className="add-page-button" onClick={handleAddPage}>
               <span className="material-symbols-outlined">add_circle</span>
             </div>
@@ -262,14 +235,10 @@ export default function Project() {
                   <td>
                     <select
                       value={member.role}
-                      onChange={(e) =>
-                        setPendingChange({
-                          userid: member.userid,
-                          role: e.target.value as "admin" | "viewer",
-                        })
-                      }
+                      onChange={(e) => setPendingChange({ userid: member.userid, role: e.target.value as MemberPermission["role"] })}
                     >
                       <option value="admin">관리자</option>
+                      <option value="member">멤버</option>
                       <option value="viewer">읽기 전용</option>
                     </select>
                   </td>
@@ -296,11 +265,7 @@ export default function Project() {
             <h3>커밋 히스토리</h3>
             <div className="page-select-wrapper">
               <label htmlFor="page-select">페이지 선택: </label>
-              <select
-                id="page-select"
-                value={selectedPage}
-                onChange={(e) => setSelectedPage(Number(e.target.value))}
-              >
+              <select id="page-select" value={selectedPage} onChange={(e) => setSelectedPage(Number(e.target.value))}>
                 {markdownPages.map((_, idx) => (
                   <option key={idx} value={idx}>Page {idx + 1}</option>
                 ))}
