@@ -112,3 +112,21 @@ def edit(project_id: int, role: str, userid: str,
 
     return {"msg": "success"}
     
+@router.get("/{project_id}/users")
+def get_user_info(project_id: int, 
+                  user_id: Optional[str] = None,
+                  user_name: str = "",
+                  user: UserModel = Depends(get_current_user)):
+    if user == None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
+    
+    columns = ["userid", "name", "role"]
+    users = [
+        dict(zip(columns, row))
+        for row in ProjectService.get_users(project_id, user_id,user_name)
+    ]
+
+    return users

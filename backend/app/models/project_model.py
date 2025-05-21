@@ -47,6 +47,37 @@ class ProjectService:
         project_model._id = project_id
         return cls(project_model)
     
+    @staticmethod
+    def get_users(project_id: int,
+                  user_id: Optional[str],
+                  user_name: str):
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                """\
+                SELECT u.userid, u.name, a.role FROM auth a
+                JOIN users u ON u.id = a.user_id
+                WHERE a.project_id = %s
+                  and (%s IS NULL or u.userid = %s)
+                  and (u.name LIKE %s)
+                
+                """,
+                (project_id, 
+                 user_id, user_id,
+                 f"%{user_name}%")
+            )
+            rows = cur.fetchall()
+            conn.commit()
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 오류"
+            )
+        finally:
+            conn.close()
+        return rows
 
     def add_admin(self, user_id):
         conn = get_connection()
