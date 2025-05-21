@@ -95,18 +95,6 @@ async def signup(user: UserModel):
             detail="비밀번호를 입력해주세요",
         )
     
-    if not user.phone:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="전화번호를 입력해주세요",
-        )
-    
-    if not user.email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이메일을 입력해주세요",
-        )
-    
     if not user.password == user.password2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
