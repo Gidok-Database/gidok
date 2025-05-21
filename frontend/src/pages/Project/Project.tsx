@@ -46,7 +46,7 @@ export default function Project() {
       .get("http://localhost:8000/api/user/me", { withCredentials: true })
       .then((res) => {
         setUserId(res.data.userid);
-        return axios.get(`http://localhost:8000/api/project/search?userid=${res.data.userid}&role=admin`);
+        return axios.get(`http://localhost:8000/api/project/search?userid=${res.data.userid}`);
       })
       .then((res) => {
         const project = res.data.find((p: any) => p.name === projectName);
@@ -63,39 +63,52 @@ export default function Project() {
 
   useEffect(() => {
     if (projectId !== null) {
-      fetchMaxPageFromCommits(projectId).then((maxPage) => {
-        fetchAllProjectPages(projectId, maxPage);
-        loadCommits(projectId, selectedPage);
-      });
+      fetchProjectPages(projectId);
+      loadCommits(projectId, selectedPage);
     }
   }, [projectId, selectedPage]);
 
-  const fetchAllProjectPages = async (projId: number, maxPages: number) => {
-    const pages: string[] = [];
-    for (let i = 1; i <= maxPages; i++) {
-      try {
-        const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
-          params: { mode: "develop", page: i },
-          withCredentials: true,
-        });
-        pages.push(res.data?.docs || `# Page ${i}\n\n(불러오기 실패)`);
-      } catch {
-        pages.push(`# Page ${i}\n\n(에러 발생)`);
-      }
-    }
-    setMarkdownPages(pages);
-  };
-
-  const fetchMaxPageFromCommits = async (projId: number): Promise<number> => {
+  const fetchProjectPages = async (projId: number) => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/commit/${projId}/search`, {
+      // 1. 먼저 max_page 계산
+      const commitRes = await axios.get(`http://localhost:8000/api/commit/${projId}/search`, {
         params: { mode: "develop", start: 0, end: 50 },
         withCredentials: true,
       });
-      return Math.max(...res.data.map((c: any) => c.max_page || 1));
-    } catch {
-      return 1;
+
+      const maxPage = Math.max(...commitRes.data.map((c: any) => c.max_page || 1));
+
+      // 2. 각 페이지를 순회하며 요청
+      const pages: string[] = [];
+      for (let i = 1; i <= maxPage; i++) {
+        try {
+          const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+            params: {
+              mode: "develop",
+              page: i,
+            },
+            withCredentials: true,
+          });
+          pages.push(res.data?.docs || `# Page ${i}\n\n(내용 없음)`);
+        } catch (err: any) {
+          console.error(`[ERROR] ${i}페이지 불러오기 실패`, err);
+          pages.push(`# Page ${i}\n\n(에러 발생)`);
+        }
+      }
+
+      setMarkdownPages(pages);
+    } catch (err) {
+      console.error("[ERROR] 최대 페이지 수 계산 실패:", err);
+      setMarkdownPages([]);
     }
+  };
+
+  const fetchProjectPage = async (projId: number, page: number): Promise<string> => {
+    const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+      params: { mode: "develop", page },
+      withCredentials: true,
+    });
+    return res.data?.docs || "";
   };
 
   const loadCommits = (projId: number, pageIdx: number) => {
@@ -124,15 +137,74 @@ export default function Project() {
             usersMap[c.user_id] = { userid: c.user_id, role };
           }
         });
-        console.log(usersMap);
         setMembers(Object.values(usersMap));
       });
   };
 
-  const handlePageUpdate = (index: number, content: string) => {
+  function detectChangedLines(before: string, after: string): [number, number] {
+    const beforeLines = before.split("\n");
+    const afterLines = after.split("\n");
+
+    const lenBefore = beforeLines.length;
+    const lenAfter = afterLines.length;
+
+    let start = 0;
+    while (
+      start < lenBefore &&
+      start < lenAfter &&
+      beforeLines[start] === afterLines[start]
+    ) {
+      start++;
+    }
+
+    let endBefore = lenBefore - 1;
+    let endAfter = lenAfter - 1;
+
+    while (
+      endBefore >= start &&
+      endAfter >= start &&
+      beforeLines[endBefore] === afterLines[endAfter]
+    ) {
+      endBefore--;
+      endAfter--;
+    }
+
+    return [start, endBefore + 1]; // end는 exclusive
+  }
+
+  const handlePageUpdate = async (index: number, content: string) => {
+    if (!projectId || markdownPages[index] === content) return;
+
+    const before = markdownPages[index];
+    const [old_start, old_end] = detectChangedLines(before, content);
+
     const updated = [...markdownPages];
     updated[index] = content;
     setMarkdownPages(updated);
+
+    try {
+      const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
+        page: index + 1,
+        title: "페이지 수정",
+        desc: `${index + 1}페이지 수정 (${old_start + 1}~${old_end}줄)`,
+        docs: content,
+        old_start,
+        old_end,
+      }, { withCredentials: true });
+
+      const hash = commitRes.data?.hash;
+      if (hash) {
+        await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
+        await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
+
+        const updatedContent = await fetchProjectPage(projectId, index + 1);
+        const updated = [...markdownPages];
+        updated[index] = updatedContent;
+        setMarkdownPages(updated);
+      }
+    } catch {
+      alert("페이지 수정 커밋 실패");
+    }
   };
 
   const handleAddPage = async () => {
@@ -148,11 +220,13 @@ export default function Project() {
         old_start: 0,
         old_end: 0,
       }, { withCredentials: true });
+
       const hash = commitRes.data?.hash;
       if (!hash) throw new Error("커밋 실패");
+
       await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
       await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
-      await fetchAllProjectPages(projectId, pageNumber);
+      await fetchProjectPages(projectId);
       setSelectedPage(pageNumber - 1);
     } catch {
       alert("페이지 추가 실패");
