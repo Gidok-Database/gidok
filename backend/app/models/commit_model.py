@@ -423,6 +423,9 @@ class Commit:
                            c.status,
                            c.mode,
                            c.max_page_number,
+                           (SELECT b.page_number FROM blocks b
+                            WHERE b.commit_id = c.id
+                            LIMIT 1),
                            p.commit_sha256
                     FROM commits c
                     JOIN users u ON u.id = c.user_id
@@ -503,6 +506,9 @@ class Commit:
                         cc.status,
                         cc.mode,
                         cc.max_page_number,
+                        (SELECT b.page_number FROM blocks b
+                         WHERE b.commit_id = cc.id
+                         LIMIT 1),
                         cc.parent_sha256
                     FROM commit_chain cc
                     JOIN users u ON u.id = cc.user_id

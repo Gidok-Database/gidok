@@ -105,7 +105,7 @@ def search(project_id: int,
         return {"msg": "error"}
 
     columns = ["hash", "user_id", "user_name", "date",
-               "title", "desc", "status", "mode", "max_page",
+               "title", "desc", "status", "mode", "max_page","page_num",
                "parent_hash"]
 
     if status == "normal":
