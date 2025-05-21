@@ -87,7 +87,7 @@ export default function Home() {
       // 2. 초기 커밋 생성 (mode는 여전히 local로 생성됨)
       const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
         page: 1,
-        docs: "# 새 문서 시작\n\n이곳에 내용을 작성하세요.",
+        docs: "# 새 페이지 \n\n내용을 작성해주세요.",
         title: "초기 커밋",
         desc: "자동 생성",
         old_start: 0,
@@ -152,6 +152,7 @@ export default function Home() {
     }
   };
 
+  // 민찬이 형이 만들어줘야함
   const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
     try {
       await axios.post(`http://localhost:8000/api/project/${projectId}/edit`, updatedData, {
@@ -170,7 +171,15 @@ export default function Home() {
 
   const handleSearch = async () => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/project/search?title=${searchKeyword}`, {
+      const params = new URLSearchParams();
+      params.append("name", searchKeyword);
+      params.append("start", "0");
+      params.append("end", "20");
+      params.append("order", "DESC");
+      params.append("role", "admin"); // 관리자 권한 필터 (옵션)
+      params.append("userid", userInfo.userid); // 현재 로그인 유저로 제한
+
+      const res = await axios.get(`http://localhost:8000/api/project/search?${params.toString()}`, {
         withCredentials: true,
       });
 
@@ -184,6 +193,7 @@ export default function Home() {
       }));
       setRepositories(filtered);
     } catch (err) {
+      console.error("[ERROR] 검색 실패:", err);
       alert("검색 실패");
     }
   };

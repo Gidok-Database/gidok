@@ -1,4 +1,4 @@
-// ✅ 전체 코드 (Project.tsx)
+// ✅ 전체 코드 (Project.tsx) - view 모드에서 page 단일 요청으로 동작하도록 수정
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -15,6 +15,8 @@ interface CommitData {
   date: string;
   parents: string[];
   pageIndex: number;
+  desc?: string;
+  docs?: string;
 }
 
 interface MemberPermission {
@@ -62,9 +64,35 @@ export default function Project() {
 
   useEffect(() => {
     if (projectId !== null) {
+      fetchProjectPage(projectId, selectedPage + 1);
       loadCommits(projectId, selectedPage);
     }
   }, [projectId, selectedPage]);
+
+  const fetchProjectPage = async (projId: number, page: number) => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+        params: {
+          mode: "develop",
+          page
+        },
+        withCredentials: true,
+      });
+
+      if (!res.data?.docs) {
+        console.error("[ERROR] 응답 형식 오류", res.data);
+        alert("페이지를 불러올 수 없습니다.");
+        return;
+      }
+
+      const updated = [...markdownPages];
+      updated[page - 1] = res.data.docs;
+      setMarkdownPages(updated);
+    } catch (err) {
+      console.error("[ERROR] 페이지 로딩 실패:", err);
+      alert("페이지 불러오기 실패");
+    }
+  };
 
   const loadCommits = (projId: number, pageIdx: number) => {
     axios
@@ -77,11 +105,7 @@ export default function Project() {
         withCredentials: true,
       })
       .then((res) => {
-        if (!Array.isArray(res.data)) {
-          console.error("[ERROR] 잘못된 커밋 응답 형식:", res.data);
-          alert("커밋 데이터를 불러오지 못했습니다.");
-          return;
-        }
+        if (!Array.isArray(res.data)) return;
 
         const parsed: CommitData[] = res.data.map((c: any) => ({
           id: c.hash,
@@ -93,27 +117,6 @@ export default function Project() {
           desc: c.desc || "",
         }));
 
-        console.log("[DEBUG] parsed commits:", parsed);
-
-        if (parsed.length === 0) {
-          console.warn("[WARN] 커밋이 비어 있음. 초기화된 페이지로 설정");
-          setMarkdownPages(["# Page 1\n\n(내용 없음)"]);
-          setCommits([]);
-          setMembers([]);
-          return;
-        }
-
-        const maxPageIndex = Math.max(...parsed.map((c) => c.pageIndex));
-        const newPages = Array.from({ length: maxPageIndex + 1 }, (_, i) => {
-          const latest = parsed
-            .filter((c) => c.pageIndex === i)
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-          return latest?.desc || `# Page ${i + 1}\n\n(내용 없음)`;
-        });
-
-        console.log("[DEBUG] constructed pages from commits:", newPages);
-
-        setMarkdownPages(newPages);
         setCommits(parsed.filter((c) => c.pageIndex === pageIdx));
 
         const usersMap: Record<string, MemberPermission> = {};
@@ -123,10 +126,6 @@ export default function Project() {
           }
         });
         setMembers(Object.values(usersMap));
-      })
-      .catch((err) => {
-        console.error("[ERROR] 커밋 로딩 실패:", err);
-        alert("커밋 불러오기 실패");
       });
   };
 
@@ -137,65 +136,40 @@ export default function Project() {
   };
 
   const handleAddPage = async () => {
-    if (!projectId) {
-      alert("프로젝트 ID가 없습니다.");
-      return;
-    }
+    if (!projectId) return;
 
     const pageNumber = markdownPages.length + 1;
     const docs = `# 새 페이지\n\n내용을 입력하세요.`;
 
     try {
-      const res = await axios.post(
-        `http://localhost:8000/api/commit/${projectId}`,
-        {
-          title: "새 페이지",
-          desc: docs,
-          docs: docs,
-          page: pageNumber,
-          old_start: 0,
-          old_end: 0,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
+        title: "새 페이지",
+        desc: docs,
+        docs,
+        page: pageNumber,
+        old_start: 0,
+        old_end: 0,
+      }, { withCredentials: true });
 
-      console.log("[DEBUG] 커밋 생성 응답:", res.data);
+      const hash = res.data?.hash;
+      if (!hash) throw new Error("커밋 실패");
 
-      if (res.data.msg === "success") {
-        // ✅ 서버 성공 시: 페이지 추가 및 이동
-        setMarkdownPages((prev) => [...prev, docs]);
-        setSelectedPage(pageNumber - 1); // 0-index
-        loadCommits(projectId, pageNumber - 1);
+      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+        cmd: "push",
+        hash,
+      }, { withCredentials: true });
 
-        setTimeout(() => {
-          previewRef.current?.scrollTo({
-            top: previewRef.current.scrollHeight,
-            behavior: "smooth",
-          });
-        }, 100);
-      } else {
-        // ⚠️ 서버는 200 OK지만 실패 메시지 반환
-        alert("페이지 커밋 생성 실패: " + res.data.msg);
-        console.error("[DEBUG] 커밋 실패:", res.data);
-      }
-    } catch (err: any) {
-      // ❌ 네트워크 또는 인증 오류
-      console.error("[ERROR] 페이지 추가 요청 실패:", err);
-      if (axios.isAxiosError(err)) {
-        alert("커밋 요청 실패: " + err.response?.data?.msg || err.message);
-      } else {
-        alert("알 수 없는 오류가 발생했습니다.");
-      }
+      setMarkdownPages((prev) => [...prev, docs]);
+      setSelectedPage(pageNumber - 1);
+    } catch (err) {
+      console.error("[ERROR] 추가 실패:", err);
+      alert("페이지 추가 실패");
     }
   };
 
   const handleDeletePage = (index: number) => {
     setMarkdownPages((prev) => prev.filter((_, i) => i !== index));
-    if (selectedPage >= index) {
-      setSelectedPage((prev) => Math.max(0, prev - 1));
-    }
+    if (selectedPage >= index) setSelectedPage((prev) => Math.max(0, prev - 1));
   };
 
   const handleExportPdf = async () => {
@@ -211,7 +185,6 @@ export default function Project() {
       const imgData = canvas.toDataURL("image/png");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
       if (i > 0) pdf.addPage();
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
     }
@@ -256,8 +229,8 @@ export default function Project() {
         </div>
         <div className="nav-right">
           <button onClick={handleExportPdf} className="export-button">PDF로 내보내기</button>
-          <span className="material-symbols-outlined" onClick={toggleHistory} title="커밋 히스토리 보기">timeline</span>
-          <span className="material-symbols-outlined" onClick={toggleSettings} title="설정 열기">settings</span>
+          <span className="material-symbols-outlined" onClick={toggleHistory}>timeline</span>
+          <span className="material-symbols-outlined" onClick={toggleSettings}>settings</span>
         </div>
       </header>
       <div className="body-container">
