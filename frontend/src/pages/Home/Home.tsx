@@ -115,11 +115,6 @@ export default function Home() {
       console.log(mergeRes.data);
       console.log(pushRes.data);
 
-      if (pushRes.data?.msg !== "커밋을 성공적으로 푸쉬했습니다.") {
-        alert("커밋 develop 승격 실패: " + pushRes.data?.msg);
-        return;
-      }
-
       // 4. UI에 반영
       setRepositories((prev) => [
         {
@@ -152,7 +147,7 @@ export default function Home() {
     }
   };
 
-  // 민찬이 형이 만들어줘야함
+  // TODO: 민찬이 형이 만들어줘야함
   const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
     try {
       await axios.post(`http://localhost:8000/api/project/${projectId}/edit`, updatedData, {
@@ -176,8 +171,8 @@ export default function Home() {
       params.append("start", "0");
       params.append("end", "20");
       params.append("order", "DESC");
-      params.append("role", "admin"); // 관리자 권한 필터 (옵션)
-      params.append("userid", userInfo.userid); // 현재 로그인 유저로 제한
+      params.append("role", "admin");
+      params.append("userid", userInfo.userid);
 
       const res = await axios.get(`http://localhost:8000/api/project/search?${params.toString()}`, {
         withCredentials: true,
