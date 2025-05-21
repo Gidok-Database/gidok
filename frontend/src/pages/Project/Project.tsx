@@ -362,7 +362,8 @@ export default function Project() {
                     {i !== filtered.length - 1 && <div className="vertical-line" />}
                   </div>
                   <div className="commit-info">
-                    <div className="commit-message">{commit.message}</div>
+                    <div className="commit-title">{commit.message}</div>
+                    <div className="commit-description">{commit.desc}</div>
                     <div className="commit-meta">
                       <span>{commit.author}</span> · <span>{commit.date}</span>
                     </div>
