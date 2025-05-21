@@ -24,7 +24,7 @@ docker-compose up --build
 **도커 서버 끄기**
 
 ```bash
-docker-compose down
+docker-compose down -v
 ```
 
 ## 개발 스택
