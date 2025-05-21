@@ -5,27 +5,99 @@ import ReactMarkdown from "react-markdown";
 import "@/pages/CommitDetail/CommitDetail.css";
 
 export default function CommitDetail() {
-  const { name, commitId } = useParams();
+  const { name: projectName, commitId } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
+  const [loading, setLoading] = useState(true);
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [previous, setPrevious] = useState<string>("(이전 문서 없음)");
+  const [current, setCurrent] = useState<string>("(이후 문서 없음)");
+
+  // ✅ 유저 인증 및 프로젝트 ID 조회
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/user/me", {
-        withCredentials: true,
+      .get("http://localhost:8000/api/user/me", { withCredentials: true })
+      .then((res) =>
+        axios.get(`http://localhost:8000/api/project/search?userid=${res.data.userid}`)
+      )
+      .then((res) => {
+        const project = res.data.find((p: any) => p.name === projectName);
+        if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
+        setProjectId(project.id);
       })
       .catch(() => {
         alert("로그인이 필요합니다.");
         navigate("/login");
-      })
-      .finally(() => setLoading(false));
-  }, [navigate]);
+      });
+  }, [navigate, projectName]);
 
-  // 예시 마크다운 데이터
-  const previous = `# 소개\n\n이 문서는 **이전 버전**입니다.\n\n- 항목 A\n- 항목 B`;
-  const current = `# 소개\n\n이 문서는 **업데이트된 버전**입니다.\n\n- 항목 A\n- 항목 C`;
+  // ✅ 커밋 기반 문서 불러오기
+  useEffect(() => {
+    if (!projectId || !commitId || commitId === "undefined") {
+      console.warn("잘못된 커밋 ID:", commitId);
+      setLoading(false);
+      return;
+    }
 
-  if (loading) return null;
+    const fetchCommitDocs = async () => {
+      try {
+        // 커밋 체인: 현재 커밋 + 부모 커밋
+        const commitRes = await axios.get(`http://localhost:8000/api/commit/${projectId}/search`, {
+          params: {
+            start_hash: commitId,
+            start: 0,
+            end: 1,
+          },
+          withCredentials: true,
+        });
+
+        console.log(commitRes);
+        const commits = commitRes.data;
+        const currentCommit = commits[0];
+        const parentCommit = commits[1];
+
+        console.log(currentCommit);
+        console.log(parentCommit);
+
+        if (currentCommit?.hash) {
+          console.log("adfasdfasfasd")
+          const currentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
+            params: {
+              mode: "develop",
+              commit: currentCommit.hash,
+              page: currentCommit.page_num
+            },
+            withCredentials: true,
+          });
+          console.log(currentDocRes);
+          setCurrent(currentDocRes.data?.docs || "(이후 문서 없음)");
+        }
+
+        if (parentCommit?.hash) {
+          const parentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
+            params: {
+              mode: "develop",
+              commit: parentCommit.hash,
+              page: parentCommit.page_num
+            },
+            withCredentials: true,
+          });
+          setPrevious(parentDocRes.data?.docs || "(이전 문서 없음)");
+        } else {
+          setPrevious("(이전 커밋 없음)");
+        }
+      } catch (err) {
+        console.error("커밋 데이터 불러오기 실패", err);
+        alert("유효하지 않은 커밋입니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCommitDocs();
+  }, [projectId, commitId]);
+
+  if (loading) return <div>로딩 중...</div>;
 
   return (
     <div className="commit-detail-container">
