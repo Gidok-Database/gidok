@@ -43,35 +43,43 @@ def create_commit(project_id: int, commit_form: CommitCreateForm,
 def patch_commit(project_id: int, commit_form: CommitPatchForm,
                  user: UserModel = Depends(get_current_user)):
     if user == None:
-        return {"msg":"error"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(user)
+
+    if commit_form.cmd in ["push", "merge"] and not commit_form.hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"{commit_form.cmd}는 해시값이 필요합니다.",
+        )
+    elif commit_form.cmd in ["promote", "merge"] and auth_level != 0:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"{commit_form.cmd}는 관리자만 가능합니다.",
+        )
+    elif commit_form.cmd not in ["promote", "merge", "push"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="cmd의 값은 promote, merge, push 중 하나여야 합니다.",
+        )
 
     if commit_form.cmd == "push":
         hash = Commit.push_commit(commit_form.hash, 
                                   project, user)
-        if not hash:
-            return {"msg": "커밋을 푸쉬하지 못 했습니다."}
-        else:
-            return {"msg": "커밋을 성공적으로 푸쉬했습니다."}
+        return {"detail": "커밋을 성공적으로 푸시했습니다.",
+                "hash": hash}
     elif commit_form.cmd == "merge":
-        if auth_level != 0:
-            return {"msg": "merge는 프로젝트의 관리자만 할 수 있습니다."}
         hash = Commit.merge_commit(commit_form.hash,
                                    project)
-        if not hash:
-            return {"msg": "커밋을 병합하지 못 했습니다."}
-        else:
-            return {"msg": "커밋을 성공적으로 병합했습니다."}
+        return {"detail": "커밋을 성공적으로 병합했습니다.",
+                "hash": hash}
     elif commit_form.cmd == "promote":
-        if auth_level != 0:
-            return {"msg": "promote는 프로젝트의 관리자만 할 수 있습니다."}
-        if Commit.promote_commit(project):
-            return {"msg": "release mode로 승격했습니다."}
-        else:
-            return {"msg": "release mode로 승격하지 못 했습니다."}
-    else:
-        return {"msg": "cmd값은 push, merge, promote 중 하나입니다."}
+        Commit.promote_commit(project)
+        return {"msg": "release mode로 승격했습니다."}
+    
     
 @router.get("/{project_id}/search")
 def search(project_id: int,

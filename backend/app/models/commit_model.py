@@ -272,7 +272,10 @@ class Commit:
             commit: Commit = Commit.get_commit(hash=hash,project=project,cursor=cur)
             if not commit or commit.user != user \
               or commit.mode != "local" or commit.status != "normal":
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"잘못된 커밋입니다.",
+                )
             
             cur.execute(
                 """\
@@ -283,8 +286,14 @@ class Commit:
                 (commit._id,)
             )
             conn.commit()
-        except:
-            return None
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
 
@@ -297,7 +306,10 @@ class Commit:
             cur = conn.cursor()
             commit: Commit = Commit.get_commit(hash=hash,project=project,cursor=cur)
             if not commit or commit.mode != "local" or commit.status != "push":
-                return None
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"잘못된 커밋입니다.",
+                )
             
             cur.execute(
                 """\
@@ -348,9 +360,14 @@ class Commit:
 
             project.update_page(commit, cur)
             conn.commit()
+        except HTTPException as e:
+            raise e
         except Exception as e:
             print(e)
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
 
@@ -371,8 +388,12 @@ class Commit:
                 (project.project._id,)
             )
             conn.commit()
-        except:
-            return False
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
 
