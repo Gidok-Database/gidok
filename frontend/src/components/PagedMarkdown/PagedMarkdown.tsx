@@ -4,14 +4,15 @@ import "@/components/PagedMarkdown/PagedMarkdown.css";
 
 interface Props {
   pages: string[];
-  onUpdate: (index: number, content: string, message: string) => void;
-  onDelete: (index: number) => void; // ✅ 삭제 콜백 추가
+  onUpdate: (index: number, content: string, title: string, desc: string) => void;
+  onDelete: (index: number) => void;
 }
 
 export default function PagedMarkdown({ pages, onUpdate, onDelete }: Props) {
   const [modalIndex, setModalIndex] = useState<number | null>(null);
   const [modalContent, setModalContent] = useState("");
-  const [commitMessage, setCommitMessage] = useState("");
+  const [commitTitle, setCommitTitle] = useState("");
+  const [commitDesc, setCommitDesc] = useState("");
 
   const topScrollRef = useRef<HTMLDivElement>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
@@ -33,21 +34,20 @@ export default function PagedMarkdown({ pages, onUpdate, onDelete }: Props) {
   const openModal = (index: number) => {
     setModalIndex(index);
     setModalContent(pages[index]);
-    setCommitMessage(""); // 커밋 메시지는 초기화
+    setCommitTitle("");
+    setCommitDesc("");
   };
 
   const saveModal = () => {
     if (modalIndex === null) return;
-
-    if (!commitMessage.trim()) {
-      alert("커밋 메시지를 입력해주세요.");
+    if (!commitTitle.trim()) {
+      alert("커밋 제목을 입력해주세요.");
       return;
     }
-
     const confirmed = window.confirm("정말로 저장하시겠습니까?");
     if (!confirmed) return;
 
-    onUpdate(modalIndex, modalContent, commitMessage);
+    onUpdate(modalIndex, modalContent, commitTitle, commitDesc);
     setModalIndex(null);
   };
 
@@ -85,11 +85,18 @@ export default function PagedMarkdown({ pages, onUpdate, onDelete }: Props) {
         <div className="edit-modal-backdrop">
           <div className="edit-modal">
             <h3>Page {modalIndex + 1} 수정</h3>
+            <input
+              type="text"
+              className="commit-title-input"
+              value={commitTitle}
+              onChange={(e) => setCommitTitle(e.target.value)}
+              placeholder="커밋 제목"
+            />
             <textarea
-              className="commit-message-input"
-              value={commitMessage}
-              onChange={(e) => setCommitMessage(e.target.value)}
-              placeholder="커밋 메시지를 입력하세요"
+              className="commit-desc-input"
+              value={commitDesc}
+              onChange={(e) => setCommitDesc(e.target.value)}
+              placeholder="커밋 설명 (선택)"
             />
             <textarea
               className="content-editor"

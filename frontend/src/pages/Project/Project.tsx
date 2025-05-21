@@ -33,6 +33,8 @@ export default function Project() {
   const [projectId, setProjectId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [userRole, setUserRole] = useState<"admin" | "member" | "viewer">("viewer");
+  const [editMeta, setEditMeta] = useState<{ title: string; desc: string } | null>(null);
+
 
   const [markdownPages, setMarkdownPages] = useState<string[]>([]);
   const [commits, setCommits] = useState<CommitData[]>([]);
@@ -173,7 +175,7 @@ export default function Project() {
   }
 
 
-  const handlePageUpdate = async (index: number, content: string) => {
+  const handlePageUpdate = async (index: number, content: string, title: string, desc: string) => {
     if (!projectId) return;
 
     const oldText = markdownPages[index];
@@ -185,14 +187,14 @@ export default function Project() {
     console.log(cleanedContent);
 
     try {
-      const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
-        page: index + 1,
-        title: "페이지 수정",
-        desc: `${index + 1}페이지 내용 수정`,
-        docs: cleanedContent,
-        old_start,
-        old_end,
-      }, { withCredentials: true });
+    const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
+      page: index + 1,
+      title,
+      desc,
+      docs: cleanedContent,
+      old_start,
+      old_end,
+    }, { withCredentials: true });
 
       const hash = commitRes.data?.hash;
       if (hash) {
@@ -291,8 +293,8 @@ export default function Project() {
         <Sidebar pages={markdownPages} />
         <main className="main-content preview-mode">
           <div className="document-preview" ref={previewRef}>
-            <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} onDelete={handleDeletePage} />
-            <div className="add-page-button" onClick={handleAddPage}>
+          <PagedMarkdown pages={markdownPages} onUpdate={handlePageUpdate} onDelete={handleDeletePage} />
+              <div className="add-page-button" onClick={handleAddPage}>
               <span className="material-symbols-outlined">add_circle</span>
             </div>
           </div>
