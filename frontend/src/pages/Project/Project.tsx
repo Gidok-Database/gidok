@@ -202,14 +202,14 @@ export default function Project() {
     let docs: string;
 
     if (old_start === old_end) {
-      // ✅ 삭제 없이 줄이 삽입된 경우: 해당 위치의 한 줄만 추출
+      // 삭제 없이 줄이 삽입된 경우: 해당 위치의 한 줄만 추출
       docs = newLines[old_start] ?? "";
     } else {
-      // ✅ 줄 삭제/변경/복합 변경의 경우: 범위 슬라이싱
+      // 줄 삭제/변경/복합 변경의 경우: 범위 슬라이싱
       const changedLines = newLines.slice(old_start, old_end);
       docs = changedLines.join("\n");
     }
-
+    
     try {
       const commitRes = await axios.post(
         `http://localhost:8000/api/commit/${projectId}`,
