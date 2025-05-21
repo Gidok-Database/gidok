@@ -6,6 +6,8 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import PagedMarkdown from "@/components/PagedMarkdown/PagedMarkdown";
+import { diffLines } from "diff";
+
 import "@/pages/Project/Project.css";
 
 interface CommitData {
@@ -105,7 +107,10 @@ export default function Project() {
 
   const fetchProjectPage = async (projId: number, page: number): Promise<string> => {
     const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
-      params: { mode: "develop", page },
+      params: {
+        mode: "develop",
+        page: String(page),
+      },
       withCredentials: true,
     });
     return res.data?.docs || "";
@@ -141,53 +146,50 @@ export default function Project() {
       });
   };
 
-  function detectChangedLines(before: string, after: string): [number, number] {
-    const beforeLines = before.split("\n");
-    const afterLines = after.split("\n");
+  /**
+   * 정확한 수정 범위(old_start, old_end)를 계산한다.
+   */
+  const getLineRange = (oldText: string, newText: string): [number, number] => {
+    const diffs = diffLines(oldText, newText);
+    let oldStart = -1;
+    let oldEnd = -1;
+    let oldLineIndex = 0;
 
-    const lenBefore = beforeLines.length;
-    const lenAfter = afterLines.length;
+    for (const part of diffs) {
+      if (part.added) continue;
 
-    let start = 0;
-    while (
-      start < lenBefore &&
-      start < lenAfter &&
-      beforeLines[start] === afterLines[start]
-    ) {
-      start++;
+      if (part.removed) {
+        if (oldStart === -1) oldStart = oldLineIndex;
+        oldEnd = oldLineIndex + part.count!;
+      }
+
+      if (!part.added && !part.removed) {
+        oldLineIndex += part.count!;
+      }
     }
 
-    let endBefore = lenBefore - 1;
-    let endAfter = lenAfter - 1;
-
-    while (
-      endBefore >= start &&
-      endAfter >= start &&
-      beforeLines[endBefore] === afterLines[endAfter]
-    ) {
-      endBefore--;
-      endAfter--;
-    }
-
-    return [start, endBefore + 1]; // end는 exclusive
+    if (oldStart === -1) return [0, 0]; // 변경 없음
+    return [oldStart, oldEnd !== -1 ? oldEnd : oldStart];
   }
 
+
   const handlePageUpdate = async (index: number, content: string) => {
-    if (!projectId || markdownPages[index] === content) return;
+    if (!projectId) return;
 
-    const before = markdownPages[index];
-    const [old_start, old_end] = detectChangedLines(before, content);
+    const oldText = markdownPages[index];
+    const cleanedContent = content.trimEnd();
+    if (oldText === cleanedContent) return;
 
-    const updated = [...markdownPages];
-    updated[index] = content;
-    setMarkdownPages(updated);
+    const [old_start, old_end] = getLineRange(oldText, cleanedContent);
+
+    console.log(cleanedContent);
 
     try {
       const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
         page: index + 1,
         title: "페이지 수정",
-        desc: `${index + 1}페이지 수정 (${old_start + 1}~${old_end}줄)`,
-        docs: content,
+        desc: `${index + 1}페이지 내용 수정`,
+        docs: cleanedContent,
         old_start,
         old_end,
       }, { withCredentials: true });
@@ -200,9 +202,10 @@ export default function Project() {
         const updatedContent = await fetchProjectPage(projectId, index + 1);
         const updated = [...markdownPages];
         updated[index] = updatedContent;
+        console.log(updated);
         setMarkdownPages(updated);
       }
-    } catch {
+    } catch (err) {
       alert("페이지 수정 커밋 실패");
     }
   };
