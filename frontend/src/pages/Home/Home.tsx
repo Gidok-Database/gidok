@@ -112,8 +112,13 @@ export default function Home() {
         hash: hash,
       }, { withCredentials: true });
 
-      console.log(mergeRes.data);
-      console.log(pushRes.data);
+      const promoteRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+        cmd: "promote",
+        hash: hash,
+      }, { withCredentials: true });
+
+      // console.log(mergeRes.data);
+      // console.log(pushRes.data);
 
       // 4. UI에 반영
       setRepositories((prev) => [
