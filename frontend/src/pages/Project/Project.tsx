@@ -34,7 +34,6 @@ export default function Project() {
   const [projectId, setProjectId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string>("");
   const [userRole, setUserRole] = useState<"admin" | "member" | "viewer">("viewer");
-  const [editMeta, setEditMeta] = useState<{ title: string; desc: string } | null>(null);
 
   const [markdownPages, setMarkdownPages] = useState<string[]>([]);
   const [commits, setCommits] = useState<CommitData[]>([]);
