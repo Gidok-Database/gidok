@@ -43,11 +43,20 @@ def search_project(name: str = "", start: int = 0, end: int = 10,
                    order: str = "ASC", role: Optional[str] = None, userid: Optional[str] = None):
     
     if order not in ["ASC", "DESC"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="order 값은 ASC 또는 DESC 값 중 하나여야 합니다.",
+        )
     if role not in [None, "admin", "member", "viewer"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="role 값은 admin, member, viewer 값 중 하나여야 합니다.",
+        )
     if role and not userid:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="order 값은 ASC 또는 DESC 값 중 하나여야 합니다.",
+        )
     columns = ["id", "name", "organization", "description"]
     projects = [
         dict(zip(columns, row))
