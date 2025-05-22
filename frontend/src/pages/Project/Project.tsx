@@ -132,7 +132,7 @@ export default function Project() {
           author: c.user_name,
           date: c.date,
           parents: c.parent_hash ? [c.parent_hash] : [],
-          pageIndex: (c.max_page || 1) - 1,
+          pageIndex: (c.page_num || 1) - 1,
           desc: c.desc || "",
         }));
         setCommits(parsed.filter((c) => c.pageIndex === pageIdx));
