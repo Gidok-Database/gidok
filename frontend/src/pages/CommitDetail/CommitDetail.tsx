@@ -74,15 +74,18 @@ export default function CommitDetail() {
         }
 
         if (parentCommit?.hash) {
-          const parentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
+          await axios.get(`http://localhost:8000/api/project/${projectId}`, {
             params: {
               mode: "develop",
               hash: parentCommit.hash,
-              page: parentCommit.page_num
+              page: currentCommit.page_num
             },
             withCredentials: true,
+          }).then((parentDocRes) => {
+            setPrevious(parentDocRes.data?.docs || "(이전 문서 없음)");
+          }).catch(() => {
+            setPrevious("(해당 페이지에 이전 문서 없음)");
           });
-          setPrevious(parentDocRes.data?.docs || "(이전 문서 없음)");
         } else {
           setPrevious("(이전 커밋 없음)");
         }
