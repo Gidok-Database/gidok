@@ -96,24 +96,39 @@ async def view(project_id: int, page: int, mode: Optional[str] = None,
 def edit(project_id: int, role: str, userid: str, 
          current_user: UserModel = Depends(get_current_user)):
     if current_user == None:
-        return {"msg": "로그인이 필요합니다."}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
     if role not in ["admin", "member", "viewer"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="role 값은 admin, member, viewer 중 하나여야 합니다.",
+        )
     
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(current_user)
     
     if auth_level != 0:
-        return {"msg": "권한이 없음"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="관리자만 가능합니다.",
+        )
     
     user = UserService.get_user(userid)
     if not user:
-        return {"msg": "유저가 없음"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="해당 유저가 없습니다.",
+        )
     
     if not project.add_user_role(user, role):
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="권한 변경을 실패 했습니다.",
+        )
 
-    return {"msg": "success"}
+    return {"detail": "유저 권한을 성공적으로 변경했습니다."}
     
 @router.get("/{project_id}/users")
 def get_user_info(project_id: int, 

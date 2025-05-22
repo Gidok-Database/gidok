@@ -136,8 +136,12 @@ class ProjectService:
                     (self.project._id, user._id, role)
                 )
             conn.commit()
-        except:
-            return False
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
         
@@ -158,8 +162,12 @@ class ProjectService:
             )
             role = cur.fetchone()
             conn.commit()
-        except:
-            return None
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
 
@@ -217,6 +225,12 @@ class ProjectService:
             )
             projects = cur.fetchall()
             conn.commit()
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="서버 에러",
+            )
         finally:
             conn.close()
         return projects
