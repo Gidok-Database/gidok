@@ -43,6 +43,7 @@ export default function Project() {
   const [members, setMembers] = useState<MemberPermission[]>([]);
   const [pendingChange, setPendingChange] = useState<MemberPermission | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const [inviteUserId, setInviteUserId] = useState("");
 
   useEffect(() => {
     axios
@@ -402,6 +403,49 @@ export default function Project() {
     }
   };
 
+  const handleInvite = async () => {
+    if (!projectId || !inviteUserId.trim()) {
+      alert("유저 ID를 입력해주세요.");
+      return;
+    }
+
+    try {
+      // ✅ 유저가 실제로 존재하는지 확인
+      const res = await axios.get("http://localhost:8000/api/user", {
+        params: { user_id: inviteUserId.trim() },
+        withCredentials: true,
+      });
+
+      if (!res.data || res.data.length === 0) {
+        alert("해당 유저를 찾을 수 없습니다.");
+        return;
+      }
+
+      // ✅ 이미 초대된 유저인지 확인
+      if (members.some((m) => m.userid === inviteUserId.trim())) {
+        alert("이미 초대된 유저입니다.");
+        return;
+      }
+
+      // ✅ viewer 권한 부여
+      await axios.patch(
+        `http://localhost:8000/api/project/${projectId}`,
+        {},
+        {
+          params: { userid: inviteUserId.trim(), role: "viewer" },
+          withCredentials: true,
+        }
+      );
+
+      alert("초대 완료 (viewer 권한)");
+      setInviteUserId("");
+      await loadProjectMembers(projectId);
+    } catch (err) {
+      alert("초대 실패");
+      console.error(err);
+    }
+  };
+
 
   const cancelRoleChange = () => setPendingChange(null);
   const toggleSettings = () => setShowSettings((prev) => (!prev && showHistory ? (setShowHistory(false), true) : !prev));
@@ -436,6 +480,16 @@ export default function Project() {
         </main>
 
         <aside className={`settings-panel ${showSettings ? "show" : ""}`}>
+          <h4>유저 초대</h4>
+          <div className="invite-form">
+            <input
+              type="text"
+              placeholder="유저 ID 입력"
+              value={inviteUserId}
+              onChange={(e) => setInviteUserId(e.target.value)}
+            />
+            <button onClick={handleInvite}>초대</button>
+          </div>
           <h3>프로젝트 설정</h3>
           <h4>유저 권한 관리</h4>
           <table className="permissions-table">
