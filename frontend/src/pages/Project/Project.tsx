@@ -69,8 +69,21 @@ export default function Project() {
     if (projectId !== null) {
       fetchProjectPages(projectId);
       loadCommits(projectId, selectedPage);
+      loadProjectMembers(projectId); 
     }
   }, [projectId, selectedPage]);
+
+  const loadProjectMembers = async (projId: number) => {
+    try {
+      const res = await axios.get(`http://localhost:8000/api/project/${projId}/users`, {
+        withCredentials: true,
+      });
+      setMembers(res.data); // 응답은 [{userid, name, role}]
+    } catch (err) {
+      console.error("[ERROR] 유저 권한 불러오기 실패:", err);
+      setMembers([]);
+    }
+  };
 
   const fetchProjectPages = async (projId: number) => {
     try {
@@ -136,15 +149,6 @@ export default function Project() {
           desc: c.desc || "",
         }));
         setCommits(parsed.filter((c) => c.pageIndex === pageIdx));
-
-        const usersMap: Record<string, MemberPermission> = {};
-        res.data.forEach((c: any) => {
-          if (c.user_id) {
-            const role: MemberPermission["role"] = c.role || "viewer";
-            usersMap[c.user_id] = { userid: c.user_id, role };
-          }
-        });
-        setMembers(Object.values(usersMap));
       });
   };
 
@@ -241,6 +245,7 @@ export default function Project() {
         const updated = [...markdownPages];
         updated[index] = updatedContent;
         setMarkdownPages(updated);
+        await loadCommits(projectId, index);
       }
     } catch (err) {
       alert("페이지 수정 커밋 실패");
@@ -268,6 +273,7 @@ export default function Project() {
       await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
       await fetchProjectPages(projectId);
       setSelectedPage(pageNumber - 1);
+      loadCommits(projectId, pageNumber);
     } catch {
       alert("페이지 추가 실패");
     }
