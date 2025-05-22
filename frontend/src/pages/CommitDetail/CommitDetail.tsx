@@ -64,7 +64,7 @@ export default function CommitDetail() {
           const currentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
             params: {
               mode: "develop",
-              commit: currentCommit.hash,
+              hash: currentCommit.hash,
               page: currentCommit.page_num
             },
             withCredentials: true,
@@ -77,7 +77,7 @@ export default function CommitDetail() {
           const parentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
             params: {
               mode: "develop",
-              commit: parentCommit.hash,
+              hash: parentCommit.hash,
               page: parentCommit.page_num
             },
             withCredentials: true,
