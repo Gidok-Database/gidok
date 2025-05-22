@@ -65,8 +65,7 @@ CREATE TABLE "projects" (
     "id" SERIAL PRIMARY KEY,
     "name" VARCHAR(100),
     "organization" VARCHAR(64),
-    "description" TEXT,
-    "path" TEXT
+    "description" TEXT
 );
 
 -- Enum for user authorization roles in a project

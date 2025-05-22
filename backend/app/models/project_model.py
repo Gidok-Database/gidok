@@ -12,7 +12,6 @@ class ProjectModel(BaseModel):
     name: str
     org: Optional[str] = None
     desc: Optional[str] = None
-    _path: Optional[str] = PrivateAttr(None)
 
 
 class ProjectService:
