@@ -19,6 +19,7 @@ interface CommitData {
   pageIndex: number;
   desc?: string;
   docs?: string;
+  mode?: string;
 }
 
 interface MemberPermission {
@@ -34,7 +35,6 @@ export default function Project() {
   const [userId, setUserId] = useState<string>("");
   const [userRole, setUserRole] = useState<"admin" | "member" | "viewer">("viewer");
   const [editMeta, setEditMeta] = useState<{ title: string; desc: string } | null>(null);
-
 
   const [markdownPages, setMarkdownPages] = useState<string[]>([]);
   const [commits, setCommits] = useState<CommitData[]>([]);
@@ -56,7 +56,6 @@ export default function Project() {
         const project = res.data.find((p: any) => p.name === projectName);
         if (!project) throw new Error("프로젝트를 찾을 수 없습니다.");
         setProjectId(project.id);
-        setUserRole(project.role);
       })
       .catch(() => {
         alert("로그인이 필요합니다.");
@@ -71,7 +70,47 @@ export default function Project() {
       loadCommits(projectId, selectedPage);
       loadProjectMembers(projectId); 
     }
+    if (projectId !== null && userId) {
+    // 🔁 현재 유저의 권한만 조회
+    axios
+      .get(`http://localhost:8000/api/project/${projectId}/users`, {
+        params: { user_id: userId },
+        withCredentials: true,
+      })
+      .then((res) => {
+        if (res.data.length > 0) {
+          setUserRole(res.data[0].role);
+        } else {
+          setUserRole("viewer"); // 해당 프로젝트에 속하지 않은 경우
+        }
+      })
+      .catch((err) => {
+        console.error("[ERROR] 권한 정보 불러오기 실패:", err);
+        setUserRole("viewer");
+      });
+    }
   }, [projectId, selectedPage]);
+
+  useEffect(() => {
+    if (projectId !== null && userId) {
+      axios
+        .get(`http://localhost:8000/api/project/${projectId}/users`, {
+          params: { user_id: userId },
+          withCredentials: true,
+        })
+        .then((res) => {
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            setUserRole(res.data[0].role); // 정확한 권한 세팅
+          } else {
+            setUserRole("viewer"); // 프로젝트에 속하지 않은 경우
+          }
+        })
+        .catch((err) => {
+          console.error("[ERROR] 권한 조회 실패:", err);
+          setUserRole("viewer"); // 기본값
+        });
+    }
+  }, [projectId, userId]);
 
   const loadProjectMembers = async (projId: number) => {
     try {
@@ -101,7 +140,7 @@ export default function Project() {
         try {
           const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
             params: {
-              mode: "develop",
+              mode: "release",
               page: i,
             },
             withCredentials: true,
@@ -147,6 +186,7 @@ export default function Project() {
           parents: c.parent_hash ? [c.parent_hash] : [],
           pageIndex: (c.page_num || 1) - 1,
           desc: c.desc || "",
+          mode: c.mode,
         }));
         setCommits(parsed.filter((c) => c.pageIndex === pageIdx));
       });
@@ -244,7 +284,7 @@ export default function Project() {
         const updatedContent = await fetchProjectPage(projectId, index + 1);
         const updated = [...markdownPages];
         updated[index] = updatedContent;
-        setMarkdownPages(updated);
+        // setMarkdownPages(updated);
         await loadCommits(projectId, index);
       }
     } catch (err) {
@@ -271,6 +311,8 @@ export default function Project() {
 
       await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
       await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
+      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "promote", hash }, { withCredentials: true });
+
       await fetchProjectPages(projectId);
       setSelectedPage(pageNumber - 1);
       loadCommits(projectId, pageNumber);
@@ -301,13 +343,66 @@ export default function Project() {
     pdf.save("새 문서.pdf");
   };
 
-  const confirmRoleChange = () => {
-    if (pendingChange) {
+  const confirmRoleChange = async () => {
+    if (pendingChange && projectId) {
       const { userid, role } = pendingChange;
-      setMembers((prev) => prev.map((m) => (m.userid === userid ? { ...m, role } : m)));
-      setPendingChange(null);
+
+      // ✅ 현재 관리자가 1명이고 그 관리자를 바꾸려는 경우 차단
+      const adminCount = members.filter((m) => m.role === "admin").length;
+      const isTargetAdmin = members.find((m) => m.userid === userid)?.role === "admin";
+
+      if (adminCount === 1 && isTargetAdmin && role !== "admin") {
+        alert("관리자는 최소 1명 이상 필요합니다.");
+        setPendingChange(null);
+        return;
+      }
+
+      try {
+        await axios.patch(
+          `http://localhost:8000/api/project/${projectId}`,
+          {},
+          {
+            params: { userid, role },
+            withCredentials: true,
+          }
+        );
+        await loadProjectMembers(projectId); // 변경 후 다시 불러오기
+        setPendingChange(null);
+      } catch (err) {
+        alert("권한 변경에 실패했습니다.");
+      }
     }
   };
+
+  const applyCommit = async (hash: string) => {
+    if (!projectId) return;
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/commit/${projectId}`,
+        { cmd: "promote", hash },
+        { withCredentials: true }
+      );
+
+      await fetchProjectPages(projectId);
+      await loadCommits(projectId, selectedPage);
+
+      // ✅ 권한 정보 최신화
+      const res = await axios.get(`http://localhost:8000/api/project/${projectId}/users`, {
+        params: { user_id: userId },
+        withCredentials: true,
+      });
+      if (res.data.length > 0) {
+        setUserRole(res.data[0].role);
+      } else {
+        setUserRole("viewer");
+      }
+
+      alert("문서에 적용되었습니다.");
+    } catch (err) {
+      alert("문서 적용에 실패했습니다.");
+    }
+  };
+
 
   const cancelRoleChange = () => setPendingChange(null);
   const toggleSettings = () => setShowSettings((prev) => (!prev && showHistory ? (setShowHistory(false), true) : !prev));
@@ -410,6 +505,20 @@ export default function Project() {
                     </div>
                     <div className="commit-hash">#{commit.id.slice(0, 7)}</div>
                   </div>
+                  {userRole === "admin" && commit.mode === "develop" && (
+                    <button
+                      type="button"
+                      className="apply-commit-button"
+                      title="이 커밋을 release 문서에 적용합니다"
+                      onClick={(e) => {
+                        e.stopPropagation();     // 커밋 상세 페이지 이동 방지
+                        e.preventDefault();      // 기본 버튼 동작 방지
+                        applyCommit(commit.id);  // merge + markdownPages 갱신
+                      }}
+                    >
+                      문서에 적용
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

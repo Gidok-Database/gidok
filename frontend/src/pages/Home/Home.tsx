@@ -42,7 +42,7 @@ export default function Home() {
         desc: user.desc,
         avatarUrl: user.avatarUrl || userInfoDefault.avatarUrl,
       });
-      return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}&role=admin`);
+      return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}`);
     }).then((res) => {
       const fetchedRepos = res.data.map((proj: any) => ({
         id: proj.id,
