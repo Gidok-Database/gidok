@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status as http_status
 from datetime import date
 from typing import Optional
 
@@ -15,19 +15,19 @@ def create_commit(project_id: int, commit_form: CommitCreateForm,
                   user: UserModel = Depends(get_current_user)):
     if user == None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
             detail="로그인이 필요합니다.",
         )
     project = ProjectService.get_project(project_id)
 
     if project.get_user_auth_level(user) >= 2:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
             detail="커밋을 만들 권한이 없습니다.",
         )
     if commit_form.page <= 0:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=http_status.HTTP_400_BAD_REQUEST,
             detail="페이지 값은 1 이상이어야 합니다.",
         )
 
@@ -44,7 +44,7 @@ def patch_commit(project_id: int, commit_form: CommitPatchForm,
                  user: UserModel = Depends(get_current_user)):
     if user == None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
             detail="로그인이 필요합니다.",
         )
     project = ProjectService.get_project(project_id)
@@ -52,17 +52,17 @@ def patch_commit(project_id: int, commit_form: CommitPatchForm,
 
     if commit_form.cmd in ["push", "merge"] and not commit_form.hash:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=http_status.HTTP_400_BAD_REQUEST,
             detail=f"{commit_form.cmd}는 해시값이 필요합니다.",
         )
     elif commit_form.cmd in ["promote", "merge"] and auth_level != 0:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
             detail=f"{commit_form.cmd}는 관리자만 가능합니다.",
         )
     elif commit_form.cmd not in ["promote", "merge", "push"]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=http_status.HTTP_400_BAD_REQUEST,
             detail="cmd의 값은 promote, merge, push 중 하나여야 합니다.",
         )
 
@@ -93,16 +93,28 @@ def search(project_id: int,
            start:int = 0, end:int = 10,
            current_user: UserModel = Depends(get_current_user)):
     if current_user == None:
-        return {"msg":"error"}
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="로그인이 필요합니다.",
+        )
     project = ProjectService.get_project(project_id)
     auth_level = project.get_user_auth_level(current_user)
     if auth_level >= 2:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="viewer 권한은 release 모드만 볼 수 있습니다.",
+        )
 
     if mode not in [None, "release", "develop", "local"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="mode 값은 release, develop, local 중 하나여야 합니다.",
+        )
     if status not in [None, "normal", "push", "merge"]:
-        return {"msg": "error"}
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="status 값은 normal, push, merge 중 하나여야 합니다.",
+        )
 
     columns = ["hash", "user_id", "user_name", "date",
                "title", "desc", "status", "mode", "max_page","page_num",
@@ -154,6 +166,9 @@ def search(project_id: int,
                 )
         ]
     else:
-        return {"msg":"error"}
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail="잘못된 값을 입력했습니다.",
+        )
     
     return commits
