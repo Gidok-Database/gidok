@@ -85,7 +85,10 @@ async def view(project_id: int, page: int, mode: Optional[str] = None,
     
     page = project.get_page(mode=mode, page=page, user=user, commit=commit)
     if page == None:
-        return {"msg": "페이지가 없거나 권한이 없음"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="페이지를 갖고 오는데 실패 했습니다.",
+        )
 
     return {"docs":page}
 
