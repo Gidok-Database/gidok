@@ -343,8 +343,10 @@ class Commit:
                     SET start_block_index = start_block_index + %s,
                         end_block_index = end_block_index + %s
                     WHERE %s <= start_block_index
+                      and mode = 'local'
+                      and EXISTS (SELECT * FROM blocks WHERE commit_id = id and page_number = %s)
                 """,
-                (new_len-old_len, new_len-old_len, commit.old_end)
+                (new_len-old_len, new_len-old_len, commit.old_end, commit.page)
             )
             
             cur.execute(
