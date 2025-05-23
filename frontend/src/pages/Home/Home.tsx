@@ -69,7 +69,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("${API_BASE}/api/user/logout", {}, {
+      await axios.post(`${API_BASE}/api/user/logout`, {}, {
         withCredentials: true,
       });
       alert("로그아웃 되었습니다.");
@@ -82,7 +82,7 @@ export default function Home() {
   const handleAddRepository = async (formData: { name: string; org?: string; desc?: string }) => {
     try {
       // 1. 프로젝트 생성
-      const res = await axios.post("${API_BASE}/api/project/", formData, {
+      const res = await axios.post(`${API_BASE}/api/project/`, formData, {
         withCredentials: true,
       });
       const projectId = res.data?.project_id;
