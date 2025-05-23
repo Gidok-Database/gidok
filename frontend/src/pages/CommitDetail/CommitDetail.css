@@ -24,7 +24,7 @@
   transition: background-color 0.2s;
 }
 .header .back-button:hover {
-  background-color: #eeeeee;
+  background-color: #357bd8;
 }
 .header h2 {
   font-size: 1.2rem;
