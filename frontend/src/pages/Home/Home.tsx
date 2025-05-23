@@ -109,18 +109,18 @@ export default function Home() {
       }
 
       // 3. 커밋 develop 모드로 push
-      const pushRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "push",
         hash: hash,
       }, { withCredentials: true });
 
       // 3. 커밋 develop 모드로 merge
-      const mergeRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "merge",
         hash: hash,
       }, { withCredentials: true });
 
-      const promoteRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "promote",
         hash: hash,
       }, { withCredentials: true });
@@ -161,21 +161,21 @@ export default function Home() {
   };
 
   // TODO: 민찬이 형이 만들어줘야함
-  const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
-    try {
-      await axios.post(`${API_BASE}/api/project/${projectId}/edit`, updatedData, {
-        withCredentials: true,
-      });
+  // const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
+  //   try {
+  //     await axios.post(`${API_BASE}/api/project/${projectId}/edit`, updatedData, {
+  //       withCredentials: true,
+  //     });
 
-      setRepositories((prev) =>
-        prev.map((p) =>
-          p.id === projectId ? { ...p, ...updatedData } : p
-        )
-      );
-    } catch (err) {
-      alert("수정 실패");
-    }
-  };
+  //     setRepositories((prev) =>
+  //       prev.map((p) =>
+  //         p.id === projectId ? { ...p, ...updatedData } : p
+  //       )
+  //     );
+  //   } catch (err) {
+  //     alert("수정 실패");
+  //   }
+  // };
 
   const handleSearch = async () => {
     try {
