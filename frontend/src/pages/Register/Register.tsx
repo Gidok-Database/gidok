@@ -6,6 +6,8 @@ import "@/pages/Register/Register.css";
 export default function Register() {
   const navigate = useNavigate();
 
+  const API_BASE = import.meta.env.VITE_API_URL; 
+
   const [form, setForm] = useState({
     userid: "",
     password: "",
@@ -31,7 +33,7 @@ export default function Register() {
     }
 
     try {
-      await axios.post("http://localhost:8000/api/user/signup", form); // ✅ JSON 전송
+      await axios.post(`${API_BASE}/api/user/signup`, form);
       alert("회원가입이 완료되었습니다.");
       navigate("/login");
     } catch (err: any) {

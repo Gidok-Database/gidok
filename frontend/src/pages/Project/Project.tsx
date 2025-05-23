@@ -30,6 +30,9 @@ interface MemberPermission {
 export default function Project() {
   const { name: projectName } = useParams();
   const navigate = useNavigate();
+
+  const API_BASE = import.meta.env.VITE_API_URL; 
+
   const [loading, setLoading] = useState(true);
   const [projectId, setProjectId] = useState<number | null>(null);
   const [userId, setUserId] = useState<string>("");
@@ -47,10 +50,10 @@ export default function Project() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/user/me", { withCredentials: true })
+      .get(`${API_BASE}/api/user/me`, { withCredentials: true })
       .then((res) => {
         setUserId(res.data.userid);
-        return axios.get(`http://localhost:8000/api/project/search?userid=${res.data.userid}`);
+        return axios.get(`${API_BASE}/api/project/search?userid=${res.data.userid}`);
       })
       .then((res) => {
         const project = res.data.find((p: any) => p.name === projectName);
@@ -73,7 +76,7 @@ export default function Project() {
     if (projectId !== null && userId) {
     // 🔁 현재 유저의 권한만 조회
     axios
-      .get(`http://localhost:8000/api/project/${projectId}/users`, {
+      .get(`${API_BASE}/api/project/${projectId}/users`, {
         params: { user_id: userId },
         withCredentials: true,
       })
@@ -94,7 +97,7 @@ export default function Project() {
   useEffect(() => {
     if (projectId !== null && userId) {
       axios
-        .get(`http://localhost:8000/api/project/${projectId}/users`, {
+        .get(`${API_BASE}/api/project/${projectId}/users`, {
           params: { user_id: userId },
           withCredentials: true,
         })
@@ -114,7 +117,7 @@ export default function Project() {
 
   const loadProjectMembers = async (projId: number) => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/project/${projId}/users`, {
+      const res = await axios.get(`${API_BASE}/api/project/${projId}/users`, {
         withCredentials: true,
       });
       setMembers(res.data); // 응답은 [{userid, name, role}]
@@ -127,7 +130,7 @@ export default function Project() {
   const fetchProjectPages = async (projId: number) => {
     try {
       // 1. 먼저 max_page 계산
-      const commitRes = await axios.get(`http://localhost:8000/api/commit/${projId}/search`, {
+      const commitRes = await axios.get(`${API_BASE}/api/commit/${projId}/search`, {
         params: { mode: "develop", start: 0, end: 50 },
         withCredentials: true,
       });
@@ -138,7 +141,7 @@ export default function Project() {
       const pages: string[] = [];
       for (let i = 1; i <= maxPage; i++) {
         try {
-          const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+          const res = await axios.get(`${API_BASE}/api/project/${projId}`, {
             params: {
               mode: "release",
               page: i,
@@ -160,7 +163,7 @@ export default function Project() {
   };
 
   const fetchProjectPage = async (projId: number, page: number): Promise<string> => {
-    const res = await axios.get(`http://localhost:8000/api/project/${projId}`, {
+    const res = await axios.get(`${API_BASE}/api/project/${projId}`, {
       params: {
         mode: "develop",
         page: String(page),
@@ -172,7 +175,7 @@ export default function Project() {
 
   const loadCommits = (projId: number, pageIdx: number) => {
     axios
-      .get(`http://localhost:8000/api/commit/${projId}/search`, {
+      .get(`${API_BASE}/api/commit/${projId}/search`, {
         params: { mode: "develop", start: 0, end: 50 },
         withCredentials: true,
       })
@@ -256,7 +259,7 @@ export default function Project() {
     
     try {
       const commitRes = await axios.post(
-        `http://localhost:8000/api/commit/${projectId}`,
+        `${API_BASE}/api/commit/${projectId}`,
         {
           page: index + 1,
           title,
@@ -271,12 +274,12 @@ export default function Project() {
       const hash = commitRes.data?.hash;
       if (hash) {
         await axios.patch(
-          `http://localhost:8000/api/commit/${projectId}`,
+          `${API_BASE}/api/commit/${projectId}`,
           { cmd: "push", hash },
           { withCredentials: true }
         );
         await axios.patch(
-          `http://localhost:8000/api/commit/${projectId}`,
+          `${API_BASE}/api/commit/${projectId}`,
           { cmd: "merge", hash },
           { withCredentials: true }
         );
@@ -297,7 +300,7 @@ export default function Project() {
     const pageNumber = markdownPages.length + 1;
     const docs = `# 새 페이지\n\n내용을 입력하세요.`;
     try {
-      const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
+      const commitRes = await axios.post(`${API_BASE}/api/commit/${projectId}`, {
         page: pageNumber,
         title: "초기 커밋",
         desc: `${pageNumber} 페이지 추가`,
@@ -309,9 +312,9 @@ export default function Project() {
       const hash = commitRes.data?.hash;
       if (!hash) throw new Error("커밋 실패");
 
-      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
-      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
-      await axios.patch(`http://localhost:8000/api/commit/${projectId}`, { cmd: "promote", hash }, { withCredentials: true });
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, { cmd: "push", hash }, { withCredentials: true });
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, { cmd: "merge", hash }, { withCredentials: true });
+      await axios.patch(`${API_BASE}/api/commit/${projectId}`, { cmd: "promote", hash }, { withCredentials: true });
 
       await fetchProjectPages(projectId);
       setSelectedPage(pageNumber - 1);
@@ -359,7 +362,7 @@ export default function Project() {
 
       try {
         await axios.patch(
-          `http://localhost:8000/api/project/${projectId}`,
+          `${API_BASE}/api/project/${projectId}`,
           {},
           {
             params: { userid, role },
@@ -378,7 +381,7 @@ export default function Project() {
     if (!projectId) return;
     try {
       await axios.patch(
-        `http://localhost:8000/api/commit/${projectId}`,
+        `${API_BASE}/api/commit/${projectId}`,
         { cmd: "promote", hash },
         { withCredentials: true }
       );
@@ -387,7 +390,7 @@ export default function Project() {
       await loadCommits(projectId, selectedPage);
 
       // ✅ 권한 정보 최신화
-      const res = await axios.get(`http://localhost:8000/api/project/${projectId}/users`, {
+      const res = await axios.get(`${API_BASE}/api/project/${projectId}/users`, {
         params: { user_id: userId },
         withCredentials: true,
       });
@@ -411,7 +414,7 @@ export default function Project() {
 
     try {
       // ✅ 유저가 실제로 존재하는지 확인
-      const res = await axios.get("http://localhost:8000/api/user", {
+      const res = await axios.get("${API_BASE}/api/user", {
         params: { user_id: inviteUserId.trim() },
         withCredentials: true,
       });
@@ -429,7 +432,7 @@ export default function Project() {
 
       // ✅ viewer 권한 부여
       await axios.patch(
-        `http://localhost:8000/api/project/${projectId}`,
+        `${API_BASE}/api/project/${projectId}`,
         {},
         {
           params: { userid: inviteUserId.trim(), role: "viewer" },

@@ -6,6 +6,8 @@ import "@/pages/Login/Login.css";
 export default function Login() {
   const navigate = useNavigate();
 
+  const API_BASE = import.meta.env.VITE_API_URL; 
+
   const [form, setForm] = useState({
     username: "",
     password: "",
@@ -23,7 +25,7 @@ export default function Login() {
     data.append("username", form.username);
     data.append("password", form.password);
 
-    axios.post("http://localhost:8000/api/user/login", data, {
+    axios.post(`${API_BASE}/api/user/login`, data, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },

@@ -24,6 +24,9 @@ const userInfoDefault = {
 
 export default function Home() {
   const navigate = useNavigate();
+
+  const API_BASE = import.meta.env.VITE_API_URL; 
+
   const [userInfo, setUserInfo] = useState(userInfoDefault);
   const [loading, setLoading] = useState(true);
   const [repositories, setRepositories] = useState<ProjectType[]>([]);
@@ -32,7 +35,7 @@ export default function Home() {
   const alertShownRef = useRef(false);
 
   useEffect(() => {
-    axios.get("http://localhost:8000/api/user/me", {
+    axios.get(`${API_BASE}/api/user/me`, {
       withCredentials: true,
     }).then((res) => {
       const user = res.data;
@@ -44,7 +47,7 @@ export default function Home() {
         desc: user.desc,
         avatarUrl: user.avatarUrl || userInfoDefault.avatarUrl,
       });
-      return axios.get(`http://localhost:8000/api/project/search?userid=${user.userid}`);
+      return axios.get(`${API_BASE}/api/project/search?userid=${user.userid}`);
     }).then((res) => {
       const fetchedRepos = res.data.map((proj: any) => ({
         id: proj.id,
@@ -66,7 +69,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:8000/api/user/logout", {}, {
+      await axios.post("${API_BASE}/api/user/logout", {}, {
         withCredentials: true,
       });
       alert("로그아웃 되었습니다.");
@@ -79,7 +82,7 @@ export default function Home() {
   const handleAddRepository = async (formData: { name: string; org?: string; desc?: string }) => {
     try {
       // 1. 프로젝트 생성
-      const res = await axios.post("http://localhost:8000/api/project/", formData, {
+      const res = await axios.post("${API_BASE}/api/project/", formData, {
         withCredentials: true,
       });
       const projectId = res.data?.project_id;
@@ -90,7 +93,7 @@ export default function Home() {
       }
 
       // 2. 초기 커밋 생성 (mode는 여전히 local로 생성됨)
-      const commitRes = await axios.post(`http://localhost:8000/api/commit/${projectId}`, {
+      const commitRes = await axios.post(`${API_BASE}/api/commit/${projectId}`, {
         page: 1,
         title: "초기 커밋",
         desc: "자동 생성",
@@ -106,18 +109,18 @@ export default function Home() {
       }
 
       // 3. 커밋 develop 모드로 push
-      const pushRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+      const pushRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "push",
         hash: hash,
       }, { withCredentials: true });
 
       // 3. 커밋 develop 모드로 merge
-      const mergeRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+      const mergeRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "merge",
         hash: hash,
       }, { withCredentials: true });
 
-      const promoteRes = await axios.patch(`http://localhost:8000/api/commit/${projectId}`, {
+      const promoteRes = await axios.patch(`${API_BASE}/api/commit/${projectId}`, {
         cmd: "promote",
         hash: hash,
       }, { withCredentials: true });
@@ -147,7 +150,7 @@ export default function Home() {
     if (!window.confirm("정말로 삭제하시겠습니까?")) return;
 
     try {
-      await axios.post("http://localhost:8000/api/project/delete", {
+      await axios.post("${API_BASE}/api/project/delete", {
         project_id: projectId
       }, { withCredentials: true });
 
@@ -160,7 +163,7 @@ export default function Home() {
   // TODO: 민찬이 형이 만들어줘야함
   const handleEditRepository = async (projectId: number, updatedData: { name?: string; org?: string; desc?: string }) => {
     try {
-      await axios.post(`http://localhost:8000/api/project/${projectId}/edit`, updatedData, {
+      await axios.post(`${API_BASE}/api/project/${projectId}/edit`, updatedData, {
         withCredentials: true,
       });
 
@@ -184,7 +187,7 @@ export default function Home() {
       params.append("role", "admin");
       params.append("userid", userInfo.userid);
 
-      const res = await axios.get(`http://localhost:8000/api/project/search?${params.toString()}`, {
+      const res = await axios.get(`${API_BASE}/api/project/search?${params.toString()}`, {
         withCredentials: true,
       });
 

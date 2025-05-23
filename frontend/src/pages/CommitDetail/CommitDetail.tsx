@@ -8,17 +8,19 @@ export default function CommitDetail() {
   const { name: projectName, commitId } = useParams();
   const navigate = useNavigate();
 
+  const API_BASE = import.meta.env.VITE_API_URL; 
+
   const [loading, setLoading] = useState(true);
   const [projectId, setProjectId] = useState<number | null>(null);
   const [previous, setPrevious] = useState<string>("(이전 문서 없음)");
   const [current, setCurrent] = useState<string>("(이후 문서 없음)");
 
-  // ✅ 유저 인증 및 프로젝트 ID 조회
+  // 유저 인증 및 프로젝트 ID 조회
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/user/me", { withCredentials: true })
+      .get(`${API_BASE}/api/user/me`, { withCredentials: true })
       .then((res) =>
-        axios.get(`http://localhost:8000/api/project/search?userid=${res.data.userid}`)
+        axios.get(`${API_BASE}/api/project/search?userid=${res.data.userid}`)
       )
       .then((res) => {
         const project = res.data.find((p: any) => p.name === projectName);
@@ -31,7 +33,7 @@ export default function CommitDetail() {
       });
   }, [navigate, projectName]);
 
-  // ✅ 커밋 기반 문서 불러오기
+  // 커밋 기반 문서 불러오기
   useEffect(() => {
     if (!projectId || !commitId || commitId === "undefined") {
       console.warn("잘못된 커밋 ID:", commitId);
@@ -42,7 +44,7 @@ export default function CommitDetail() {
     const fetchCommitDocs = async () => {
       try {
         // 커밋 체인: 현재 커밋 + 부모 커밋
-        const commitRes = await axios.get(`http://localhost:8000/api/commit/${projectId}/search`, {
+        const commitRes = await axios.get(`${API_BASE}/api/commit/${projectId}/search`, {
           params: {
             start_hash: commitId,
             start: 0,
@@ -61,7 +63,7 @@ export default function CommitDetail() {
 
         if (currentCommit?.hash) {
           console.log("adfasdfasfasd")
-          const currentDocRes = await axios.get(`http://localhost:8000/api/project/${projectId}`, {
+          const currentDocRes = await axios.get(`${API_BASE}/api/project/${projectId}`, {
             params: {
               mode: "develop",
               hash: currentCommit.hash,
@@ -74,7 +76,7 @@ export default function CommitDetail() {
         }
 
         if (parentCommit?.hash) {
-          await axios.get(`http://localhost:8000/api/project/${projectId}`, {
+          await axios.get(`${API_BASE}/api/project/${projectId}`, {
             params: {
               mode: "develop",
               hash: parentCommit.hash,

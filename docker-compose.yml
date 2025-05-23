@@ -37,6 +37,7 @@ services:
       - /app/node_modules
     environment:
       - REACT_APP_API_URL=http://fastapi-backend:8000
+      - VITE_API_URL=http://localhost:8000
     command: yarn dev --host
     depends_on:
       - backend
