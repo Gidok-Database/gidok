@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import ProjectForm from "@/components/ProjectForm/ProjectForm";
@@ -29,6 +29,8 @@ export default function Home() {
   const [repositories, setRepositories] = useState<ProjectType[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
 
+  const alertShownRef = useRef(false);
+
   useEffect(() => {
     axios.get("http://localhost:8000/api/user/me", {
       withCredentials: true,
@@ -54,8 +56,11 @@ export default function Home() {
       }));
       setRepositories(fetchedRepos);
     }).catch(() => {
-      alert("로그인이 필요합니다.");
-      navigate("/login");
+      if (!alertShownRef.current) {
+        alertShownRef.current = true;
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+      }
     }).finally(() => setLoading(false));
   }, [navigate]);
 

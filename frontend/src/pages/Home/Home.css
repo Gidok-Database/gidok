@@ -17,6 +17,10 @@
   border-radius: 50%;
   margin-bottom: 1rem;
 }
+.github-page .profile-sidebar h2 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
 .github-page .profile-sidebar .username {
   font-size: 0.9rem;
   color: #57606a;
@@ -55,6 +59,28 @@
   font-weight: bold;
   margin-bottom: 1.5rem;
 }
+.github-page .repo-list-area .search-box {
+  margin-bottom: 1rem;
+}
+.github-page .repo-list-area .search-box input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+}
+.github-page .repo-list-area .search-box button {
+  padding: 0.4rem 0.8rem;
+  background-color: #0366d6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.github-page .repo-list-area .search-box button:hover {
+  background-color: #024ea2;
+}
 .github-page .repo-list-area .repo-list {
   list-style: none;
   padding: 0;
@@ -74,19 +100,18 @@
   text-decoration: none;
   color: #000;
 }
-.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge {
-  font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 1rem;
-  border: 1px solid #d0d7de;
+.github-page .repo-list-area .repo-list .repo-item .repo-top .repo-name-link:hover {
+  text-decoration: underline;
 }
-.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge.admin {
-  background-color: #e8f0fe;
-  color: #1c5ed6;
+.github-page .repo-list-area .repo-list .repo-item .repo-top button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #d73a49;
 }
-.github-page .repo-list-area .repo-list .repo-item .repo-top .perm-badge.user {
-  background-color: #f6f8fa;
-  color: #57606a;
+.github-page .repo-list-area .repo-list .repo-item .repo-top button:hover {
+  color: #b31d28;
 }
 .github-page .repo-list-area .repo-list .repo-item .repo-meta {
   font-size: 0.85rem;
@@ -94,4 +119,12 @@
 }
 .github-page .repo-list-area .repo-list .repo-item .repo-meta span {
   margin-right: 1rem;
+}
+.github-page .repo-list-area .repo-list .repo-item .repo-meta .type-badge {
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background-color: #f1f8ff;
+  color: #0366d6;
+  font-size: 0.75rem;
+  border: 1px solid #c8e1ff;
 }
