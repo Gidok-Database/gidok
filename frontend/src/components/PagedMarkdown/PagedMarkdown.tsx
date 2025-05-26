@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "@/components/PagedMarkdown/PagedMarkdown.css";
 
 interface Props {
@@ -74,7 +75,7 @@ export default function PagedMarkdown({ pages, onUpdate, onDelete }: Props) {
               </button>
             </div>
             <div id={`page-${idx}`} className="a4-page">
-              <ReactMarkdown>{content}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
               <div className="page-number">Page {idx + 1}</div>
             </div>
           </div>

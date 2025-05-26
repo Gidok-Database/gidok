@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+
 import "@/pages/CommitDetail/CommitDetail.css";
 
 export default function CommitDetail() {
@@ -115,13 +117,13 @@ export default function CommitDetail() {
         <div className="commit-panel old">
           <h3>⬅ 이전 문서</h3>
           <div className="markdown-diff old-content">
-            <ReactMarkdown>{previous}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{previous}</ReactMarkdown>
           </div>
         </div>
         <div className="commit-panel new">
           <h3>➡ 이후 문서</h3>
           <div className="markdown-diff new-content">
-            <ReactMarkdown>{current}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{current}</ReactMarkdown>
           </div>
         </div>
       </div>

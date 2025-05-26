@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "@/components/Sidebar/Sidebar.css";
 
 interface SidebarProps {
@@ -30,7 +31,7 @@ export default function Sidebar({ pages }: SidebarProps) {
               >
                 <div className="thumbnail-box">
                   <div className="thumbnail-a4">
-                    <ReactMarkdown>{content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                   </div>
                   <span className="page-label">Page {i + 1}</span>
                 </div>
